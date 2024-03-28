@@ -1,10 +1,6 @@
 name: 'Run ComfyUI on macOS'
 description: 'Run a comfyui workflow on mac'
 inputs:
-  OS:  # id of input
-    description: 'Operating System (Linux, MacOS, Windows)'
-    required: true
-    default: 'World'
   ORG_KEY:
     description: ''
     required: true
@@ -49,7 +45,8 @@ runs:
         ~/miniconda3/bin/conda init bash
 
     - name: Download models
-      run: python download-models.py "${{ inputs.models-json }}"
+      working-directory: ~/ComfyUI
+      run: python3 download-models.py "${{ inputs.models-json }}"
       shell: bash
     
     # https://developer.apple.com/metal/pytorch/
@@ -65,7 +62,7 @@ runs:
       shell: bash
       working-directory: ~/ComfyUI
       run: |
-        pip install -r requirements.txt
+        pip3 install -r requirements.txt
     
     - name: Run Python application
       shell: bash
