@@ -67,4 +67,11 @@ runs:
     - name: Run Python application
       shell: bash
       working-directory: ~/ComfyUI
-      run: python3 main.py --force-fp16
+      run: |
+        # Start the server in the background
+        python3 main.py --force-fp16 &
+        # Wait for the server to start up
+        sleep 10 # Adjust this value as needed
+        # Curl the server
+        curl http://localhost:8188/queue
+        kill $!
