@@ -36,6 +36,12 @@ runs:
         miniconda-version: latest
         activate-environment: comfyui
         auto-activate-base: false
+
+    - name: Sleep for debugging windows
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        Start-Sleep -Seconds 3600 # Sleeps for 1 hour
+      shell: powershell
     
     - name: Install Pytorch nightly for macOS.
       if: ${{ inputs.os == 'macos' }}
