@@ -24,6 +24,7 @@ def main(json_file_path, server_url):
     response_json = response.json()
     if ('prompt_id' not in response_json):
         print("Error: prompt_id not found in response.")
+        print(response_json)
     else:
         print(response_json['prompt_id'])
 
