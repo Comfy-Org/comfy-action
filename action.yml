@@ -1,0 +1,116 @@
+name: 'Run ComfyUI on macOS'
+description: 'Run a comfyui workflow on mac'
+inputs:
+  ORG_KEY:
+    description: ''
+    required: true
+  py_ver:
+    description: 'Python version'
+    required: false
+    default: "3.11"
+  torch_ver:
+    description: 'Pytorch version. Can be nightly or stable'
+    required: false
+    default: "stable"
+  models-json:
+    description: 'JSON string containing models and their download URLs. The models will be downloaded into the exact directory relative to /ComfyUI/models/. eg { "model_name": { url: "https://example.com/model.pth", "directory": "checkpoints" } }'
+    required: true
+  workflow_json_path:
+    description: 'Path (relative to the root of the Github repo) of the Workflow JSON to run. Must be API format JSON.'
+    required: true
+  timeout:
+    description: 'Timeout for the workflow (in seconds)'
+    required: false
+    default: "600"
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    
+    - uses: conda-incubator/setup-miniconda@v3.0.3
+      with:
+        miniconda-version: latest
+        activate-environment: comfyui
+        auto-activate-base: false
+    # https://developer.apple.com/metal/pytorch/
+    # Install pytorch nightly
+    - name: Create Conda environment
+      shell: bash -el {0}
+      run: |
+        conda install pytorch torchvision torchaudio -c pytorch-nightly
+    
+    - run: |
+        conda info
+        conda list
+      shell: bash -el {0}
+
+    - name: Checkout Comfy repository
+      uses: actions/checkout@v4  
+
+    - name: Download models
+      run: |
+        cd ${{ github.action_path }}
+        ls "${{ github.workspace }}"
+        pip3 install -r requirements.txt
+        python3 download-models.py '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+      shell: bash
+
+    - name: Install dependencies
+      shell: bash -el {0}
+      run: |
+        which pip3
+        pip3 install -r requirements.txt
+    
+    - name: Run Python application
+      shell: bash -el {0}
+      run: |
+        python3 main.py --force-fp16 > application.log 2>&1 &
+
+    - name: Check if the server is running
+      run: |
+        cd ${{ github.action_path }}
+        python3 poll_server_start.py
+      shell: bash
+
+    - name: Queue Prompt
+      id: queue_prompt
+      shell: bash
+      run: |
+        cd ${{ github.action_path }}
+        FULL_PATH="${GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
+        echo "Full path to the JSON file: $FULL_PATH"
+        PROMPT_ID=$(python3 queue_prompt.py "$FULL_PATH" 2>&1)
+        echo "prompt_id=$PROMPT_ID" >> $GITHUB_OUTPUT
+        echo "Script output: "
+        echo "$PROMPT_ID"
+
+    - name: Check Prompt Status and Get Output Files
+      shell: bash
+      id: check_status
+      run: |
+        cd ${{ github.action_path }}
+        echo "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
+        python check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+
+    - name: Upload Output Files
+      uses: actions/upload-artifact@v4
+      with:
+        name: output-files
+        path: ${{ github.workspace }}/output/**
+
+    - name: Upload log file
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-logs
+        path: application.log
+    
+    - name: Cleanup
+      shell: bash
+      run: rm -rf ${{ github.workspace }}/*
+
+    - name: Cleanup Conda
+      shell: bash -el {0}
+      run: conda deactivate && conda env remove --name comfyui
