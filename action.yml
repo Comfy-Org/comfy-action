@@ -106,14 +106,14 @@ runs:
     - name: Upload Output Files
       uses: actions/upload-artifact@v4
       with:
-        name: output-files
+        name: output-files-${{ github.job }}
         path: ${{ github.workspace }}/output/**
 
     - name: Upload log file
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: app-logs
+        name: app-logs-${{ github.job }}
         path: application.log
     
     - name: Cleanup
