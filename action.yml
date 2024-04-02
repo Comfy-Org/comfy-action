@@ -35,6 +35,7 @@ runs:
       with:
         miniconda-version: latest
         activate-environment: comfyui
+      continue-on-error: true
 
     - name: Sleep for debugging windows
       if: ${{ inputs.os == 'windows' && failure() }}
