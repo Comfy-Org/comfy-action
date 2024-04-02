@@ -87,7 +87,6 @@ runs:
       shell: bash
       run: |
         cd ${{ github.action_path }}
-        ls -R "${{ github.workspace }}/models/"
         FULL_PATH="${GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
         echo "Full path to the JSON file: $FULL_PATH"
         PROMPT_ID=$(python3 queue_prompt.py "$FULL_PATH" 2>&1)
@@ -96,6 +95,7 @@ runs:
         echo "$PROMPT_ID"
   
     - name: Sleep
+      if: always()
       run: sleep 1000
       shell: bash
 
