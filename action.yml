@@ -63,7 +63,6 @@ runs:
         ls "${{ github.workspace }}"
         pip3 install -r requirements.txt
         python3 download-models.py '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
-        ls -R "${{ github.workspace }}/models/"
       shell: bash
 
     - name: Install dependencies
@@ -88,6 +87,7 @@ runs:
       shell: bash
       run: |
         cd ${{ github.action_path }}
+        ls -R "${{ github.workspace }}/models/"
         FULL_PATH="${GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
         echo "Full path to the JSON file: $FULL_PATH"
         PROMPT_ID=$(python3 queue_prompt.py "$FULL_PATH" 2>&1)
