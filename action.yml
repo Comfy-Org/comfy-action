@@ -1,13 +1,14 @@
 name: 'Run ComfyUI on macOS'
 description: 'Run a comfyui workflow on mac'
 inputs:
-  ORG_KEY:
-    description: ''
+  os:
+    description: 'Operating System. macos, linux, windows.'
     required: true
-  py_ver:
-    description: 'Python version'
+    default: "macos"
+  cuda_version:
+    description: 'CUDA Version. Will be used in the conda install command for pytorch. 11.8 or 12.1' 
     required: false
-    default: "3.11"
+    default: "12.1"
   torch_ver:
     description: 'Pytorch version. Can be nightly or stable'
     required: false
@@ -35,12 +36,18 @@ runs:
         miniconda-version: latest
         activate-environment: comfyui
         auto-activate-base: false
-    # https://developer.apple.com/metal/pytorch/
-    # Install pytorch nightly
-    - name: Create Conda environment
+    
+    - name: Install Pytorch nightly for macOS.
+      if: ${{ inputs.os == 'macos' }}
       shell: bash -el {0}
       run: |
         conda install pytorch torchvision torchaudio -c pytorch-nightly
+    
+    - name: Install Pytorch for compatible CUDA version for Linux.
+      if: ${{ inputs.os == 'linux' }}
+      shell: bash -el {0}
+      run: |
+        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
     
     - run: |
         conda info
