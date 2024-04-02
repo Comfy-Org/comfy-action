@@ -37,11 +37,11 @@ runs:
         activate-environment: comfyui
       continue-on-error: true
 
-    - name: Sleep for debugging windows
-      if: ${{ inputs.os == 'windows' && failure() }}
-      run: |
-        Start-Sleep -Seconds 3600 # Sleeps for 1 hour
-      shell: powershell
+    # - name: Sleep for debugging windows
+    #   if: ${{ inputs.os == 'windows' && failure() }}
+    #   run: |
+    #     Start-Sleep -Seconds 3600 # Sleeps for 1 hour
+    #   shell: powershell
     
     - name: Install Pytorch nightly for macOS.
       if: ${{ inputs.os == 'macos' }}
@@ -59,7 +59,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia
+        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia --yes
     
     - name: "Check conda environment on Mac/Linux"
       if: ${{ inputs.os != 'windows' }}
@@ -183,7 +183,7 @@ runs:
     - name: Cleanup Conda
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       shell: bash -el {0}
-      run: conda deactivate && conda env remove --name comfyui -y
+      run: conda deactivate && conda env remove --name comfyui
 
     - name: Cleanup Conda
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
