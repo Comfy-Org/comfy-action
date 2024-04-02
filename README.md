@@ -1,4 +1,4 @@
-# comfymac-action
+# comfy-action
 
 Sets up ComfyUI on Github Action Runner and execute a workflow json.
 
