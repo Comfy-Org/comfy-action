@@ -93,11 +93,6 @@ runs:
         echo "prompt_id=$PROMPT_ID" >> $GITHUB_OUTPUT
         echo "Script output: "
         echo "$PROMPT_ID"
-  
-    - name: Sleep
-      if: always()
-      run: sleep 1000
-      shell: bash
 
     - name: Check Prompt Status and Get Output Files
       shell: bash
