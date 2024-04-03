@@ -206,6 +206,6 @@ runs:
       run: Remove-Item -Path "${{ github.workspace }}/*" -Recurse -Force
 
     - name: Cleanup Conda
-      if: always()
+      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       shell: bash -el {0}
       run: conda deactivate && conda env remove --name comfyui && conda clean -p
