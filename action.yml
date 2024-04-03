@@ -105,8 +105,8 @@ runs:
         cd $Env:GITHUB_ACTION_PATH
         ls "$Env:GITHUB_WORKSPACE"
         pip install -r requirements.txt
-        $modelsJson = "${{ toJSON(inputs.models-json) }}"
-        python download-models.py "$modelsJson" "$Env:GITHUB_WORKSPACE/models/"
+        $modelsJsonBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('${{ inputs.models-json }}'))
+        python download-models.py "$modelsJsonBase64" "$Env:GITHUB_WORKSPACE/models/"
       shell: powershell
 
     - name: Install dependencies
