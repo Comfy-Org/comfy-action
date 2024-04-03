@@ -139,7 +139,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci *> $Env:GITHUB_WORKSPACE/application.log
+        python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
 
     - name: Check if the server is running
       if: ${{ inputs.os != 'windows' }}
