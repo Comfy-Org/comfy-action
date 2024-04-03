@@ -128,4 +128,4 @@ runs:
     - name: Cleanup Conda
       if: always()
       shell: bash -el {0}
-      run: conda deactivate && conda env remove --name comfyui
+      run: conda deactivate && conda env remove --name comfyui && conda clean -p
