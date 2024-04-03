@@ -114,8 +114,8 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        Get-Command pip
-        pip install -r requirements.txt
+        Get-Command $CONDA/envs/comfyui/pip
+        $CONDA/envs/comfyui/pip install -r requirements.txt
     
     - name: Run Python application
       if: ${{ inputs.os != 'windows' }}
@@ -134,7 +134,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        Start-Job { python $Env:GITHUB_WORKSPACE/main.py --force-fp16 *> application.log }
+        Start-Job { $CONDA/envs/comfyui/python $Env:GITHUB_WORKSPACE/main.py --force-fp16 *> application.log }
 
     - name: Check if the server is running
       if: ${{ inputs.os != 'windows' }}
@@ -147,7 +147,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       run: |
         cd $Env:GITHUB_ACTION_PATH
-        python poll_server_start.py
+        $CONDA/envs/comfyui/python poll_server_start.py
       shell: powershell
 
 
@@ -164,7 +164,7 @@ runs:
         cd $Env:GITHUB_ACTION_PATH
         $FULL_PATH = "$Env:GITHUB_WORKSPACE/${{ inputs.workflow_json_path }}"
         Write-Host "Full path to the JSON file: $FULL_PATH"
-        $PROMPT_ID = python queue_prompt.py "$FULL_PATH" 2>&1
+        $PROMPT_ID = $CONDA/envs/comfyui/python queue_prompt.py "$FULL_PATH" 2>&1
         Write-Host "prompt_id=$PROMPT_ID" >> $Env:GITHUB_OUTPUT
         Write-Host "Script output: "
         Write-Host "$PROMPT_ID"
@@ -175,7 +175,7 @@ runs:
       run: |
         cd $Env:GITHUB_ACTION_PATH
         Write-Host "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
-        python check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+        $CONDA/envs/comfyui/python check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
     - name: Upload Output Files
       uses: actions/upload-artifact@v4
