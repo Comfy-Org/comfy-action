@@ -32,9 +32,20 @@ runs:
         python-version: 3.11
     
     - uses: conda-incubator/setup-miniconda@v3.0.3
+      if: ${{ inputs.os != 'windows' }}
       with:
+        auto-update-conda: true
         miniconda-version: latest
         activate-environment: comfyui
+        auto-activate-base: false
+
+    - uses: conda-incubator/setup-miniconda@v3.0.3
+      if: ${{ inputs.os == 'windows' }}
+      with:
+        auto-update-conda: true
+        miniconda-version: latest
+        activate-environment: comfyui
+        auto-activate-base: false
       continue-on-error: true
 
     # - name: Sleep for debugging windows
@@ -94,7 +105,8 @@ runs:
         cd $Env:GITHUB_ACTION_PATH
         ls "$Env:GITHUB_WORKSPACE"
         pip install -r requirements.txt
-        python download-models.py '${{ inputs.models-json }}' "$Env:GITHUB_WORKSPACE/models/"
+        $modelsJson = "${{ toJSON(inputs.models-json) }}"
+        python download-models.py "$modelsJson" "$Env:GITHUB_WORKSPACE/models/"
       shell: powershell
 
     - name: Install dependencies
@@ -183,11 +195,12 @@ runs:
     - name: Cleanup Conda
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       shell: bash -el {0}
-      run: conda deactivate && conda env remove --name comfyui
+      run: conda deactivate && conda env remove --name comfyui && conda clean --all
 
     - name: Cleanup Conda
-      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
+      if: ${{ inputs.os == 'windows' && always() }}
       shell: powershell
       run: |
         conda deactivate
         conda env remove --name comfyui -y
+        conda clean --all
