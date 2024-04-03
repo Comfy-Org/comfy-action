@@ -139,8 +139,11 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        Start-Process powershell -ArgumentList "-NoProfile", "-Command", "python $Env:GITHUB_WORKSPACE/main.py --force-fp16"
-
+        $logFile = Join-Path $Env:GITHUB_WORKSPACE "application.log"
+        $condaActivateScript = "C:\Users\yoland68\miniconda3\shell\condabin\conda-hook.ps1"
+        $envName = "comfyui"
+        $command = "conda activate `$envName && python `$Env:GITHUB_WORKSPACE/main.py --force-fp16 *> `$logFile"
+        Start-Process powershell -ArgumentList "-NoProfile", "-Command", ". `$condaActivateScript; `$command"
 
     - name: Check if the server is running
       if: ${{ inputs.os != 'windows' }}
