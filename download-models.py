@@ -24,6 +24,7 @@ def main(models_json_base64, base_directory):
     print(models_json_base64)
     print("Base directory: " + base_directory)
     models_json = base64.b64decode(models_json_base64).decode("utf-8")
+    print(models_json)
     models = json.loads(models_json)
 
     for model_name, model_info in models.items():
