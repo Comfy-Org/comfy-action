@@ -139,11 +139,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        $logFile = Join-Path $Env:GITHUB_WORKSPACE "application.log"
-        $condaActivateScript = "C:\Users\yoland68\miniconda3\shell\condabin\conda-hook.ps1"
-        $envName = "comfyui"
-        $command = "conda activate `$envName && python `$Env:GITHUB_WORKSPACE/main.py --force-fp16 *> `$logFile"
-        Start-Process powershell -ArgumentList "-NoProfile", "-Command", ". `$condaActivateScript; `$command"
+        Start-Process powershell -ArgumentList "-File start-server.ps1"
 
     - name: Check if the server is running
       if: ${{ inputs.os != 'windows' }}
@@ -160,11 +156,11 @@ runs:
       shell: powershell
 
 
-    # - name: Sleep for debugging windows
-    #   if: ${{ inputs.os == 'windows' && failure() }}
-    #   run: |
-    #     Start-Sleep -Seconds 3600 # Sleeps for 1 hour
-    #   shell: powershell
+    - name: Sleep for debugging windows
+      if: ${{ inputs.os == 'windows' && failure() }}
+      run: |
+        Start-Sleep -Seconds 3600 # Sleeps for 1 hour
+      shell: powershell
 
     - name: Queue Prompt
       id: queue_prompt
