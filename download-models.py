@@ -13,10 +13,12 @@ def ensure_directory_exists(path):
 def download_model(url, directory, model_name):
     """Download a model file from a URL into a specific directory."""
     print(f"Downloading {model_name} from {url} to {directory}")
-    response = requests.get(url, allow_redirects=True)
     file_path = os.path.join(directory, model_name)
-    with open(file_path, 'wb') as file:
-        file.write(response.content)
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(file_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192): 
+                f.write(chunk)
     print(f"Downloaded {model_name} to {directory}")
 
 def main(models_json_base64, base_directory):
