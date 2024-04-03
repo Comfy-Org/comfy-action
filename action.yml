@@ -139,7 +139,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        python $Env:GITHUB_WORKSPACE/main.py --force-fp16 --quick-test-for-ci *> $Env:GITHUB_WORKSPACE/application.log
+        python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci *> $Env:GITHUB_WORKSPACE/application.log
 
     - name: Check if the server is running
       if: ${{ inputs.os != 'windows' }}
@@ -147,6 +147,20 @@ runs:
         cd ${{ github.action_path }}
         python3 poll_server_start.py
       shell: bash
+
+    - name: Queue Prompt
+      id: queue_prompt
+      shell: bash
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        cd ${{ github.action_path }}
+        FULL_PATH="${GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
+        echo "Full path to the JSON file: $FULL_PATH"
+        PROMPT_ID=$(python3 queue_prompt.py "$FULL_PATH" 2>&1)
+        echo "prompt_id=$PROMPT_ID" >> $GITHUB_OUTPUT
+        echo "Script output: "
+        echo "$PROMPT_ID"
+
 
     # Failure on windows
     # - name: Check if the server is running
