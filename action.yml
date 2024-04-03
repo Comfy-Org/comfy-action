@@ -123,6 +123,13 @@ runs:
       run: |
         python3 main.py --force-fp16 > application.log 2>&1 &
 
+    - name: "Check conda environment on Windows"
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        conda info
+        conda list
+      shell: powershell
+
     - name: Run Python application
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
