@@ -156,11 +156,11 @@ runs:
       shell: powershell
 
 
-    - name: Sleep for debugging windows
-      if: ${{ inputs.os == 'windows' && failure() }}
-      run: |
-        Start-Sleep -Seconds 3600 # Sleeps for 1 hour
-      shell: powershell
+    # - name: Sleep for debugging windows
+    #   if: ${{ inputs.os == 'windows' && failure() }}
+    #   run: |
+    #     Start-Sleep -Seconds 3600 # Sleeps for 1 hour
+    #   shell: powershell
 
     - name: Queue Prompt
       id: queue_prompt
