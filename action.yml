@@ -139,7 +139,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        python $Env:GITHUB_WORKSPACE/main.py --force-fp16
+        Start-Job -ScriptBlock { python $Env:GITHUB_WORKSPACE/main.py --force-fp16 }
 
     - name: Check if the server is running
       if: ${{ inputs.os != 'windows' }}
