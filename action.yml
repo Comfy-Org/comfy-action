@@ -9,12 +9,16 @@ inputs:
     description: 'CUDA Version. Will be used in the conda install command for pytorch. 11.8 or 12.1' 
     required: false
     default: "12.1"
+  # TODO(robinhuang): Add torch version as an input.
   torch_ver:
     description: 'Pytorch version. Can be nightly or stable'
     required: false
     default: "stable"
   models-json:
     description: 'JSON string containing models and their download URLs. The models will be downloaded into the exact directory relative to /ComfyUI/models/. eg { "model_name": { url: "https://example.com/model.pth", "directory": "checkpoints" } }'
+    required: true
+  workflow_name: 
+    description: 'Name of the workflow to run. This is used to identify the workflow in the logs.'
     required: true
   workflow_json_path:
     description: 'Path (relative to the root of the Github repo) of the Workflow JSON to run. Must be API format JSON.'
@@ -27,7 +31,7 @@ runs:
   using: 'composite'
   steps:
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         update-environment: false
         python-version: 3.11
@@ -181,14 +185,14 @@ runs:
     - name: Upload Output Files
       uses: actions/upload-artifact@v4
       with:
-        name: output-files
-        path: ${{ github.workspace }}/output/**
+        name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
+        path: ${{ github.workspace }}/output/** 
 
     - name: Upload log file
       uses: actions/upload-artifact@v4
       if: ${{ success() || failure() }}
       with:
-        name: app-logs
+        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: application.log
     
     - name: Cleanup
@@ -201,7 +205,7 @@ runs:
       shell: powershell
       run: Remove-Item -Path "${{ github.workspace }}/*" -Recurse -Force
 
-    # - name: Cleanup Conda
-    #   if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
-    #   shell: bash -el {0}
-    #   run: conda deactivate && conda env remove --name comfyui
+    - name: Cleanup Conda
+      if: always()
+      shell: bash -el {0}
+      run: conda deactivate && conda env remove --name comfyui && conda clean -p
