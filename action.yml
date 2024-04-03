@@ -94,7 +94,7 @@ runs:
         cd ${{ github.action_path }}
         ls "${{ github.workspace }}"
         pip3 install -r requirements.txt
-        python3 download-models.py '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+        python3 download-models.py file '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
         ls -R "${{ github.workspace }}/models/"
       shell: bash
 
@@ -105,7 +105,7 @@ runs:
         ls "$Env:GITHUB_WORKSPACE"
         pip install -r requirements.txt
         $modelsJsonBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('${{ inputs.models-json }}'))
-        python download-models.py "$modelsJsonBase64" "$Env:GITHUB_WORKSPACE/models/"
+        python download-models.py base64 "$modelsJsonBase64" "$Env:GITHUB_WORKSPACE/models/"
       shell: powershell
 
     - name: Install dependencies

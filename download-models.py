@@ -3,12 +3,13 @@ import sys
 import json
 import requests
 import base64
+import argparse
 
 def ensure_directory_exists(path):
     """Ensure that a directory exists; if it doesn't, create it."""
     if not os.path.exists(path):
-        print("Directory does not exist: " + path)
-        exit(1)
+        os.makedirs(path)
+        print("Created directory: " + path)
 
 def download_model(url, directory, model_name):
     """Download a model file from a URL into a specific directory."""
@@ -21,23 +22,31 @@ def download_model(url, directory, model_name):
                 f.write(chunk)
     print(f"Downloaded {model_name} to {directory}")
 
-def main(models_json_base64, base_directory):
-    """Main function to parse JSON and download models."""
-    print(models_json_base64)
-    print("Base directory: " + base_directory)
-    models_json = base64.b64decode(models_json_base64).decode("utf-8")
+def main(args):
+    """Main function to parse JSON and download models based on the input
+    mode."""
+    if args.mode == 'base64':
+        models_json = base64.b64decode(args.input).decode("utf-8")
+    elif args.mode == 'file':
+        with open(args.input, 'r') as file:
+            models_json = file.read()
+    
     print(models_json)
+    print("Base directory: " + args.directory)
     models = json.loads(models_json)
 
     for model_name, model_info in models.items():
         url = model_info["url"]
         directory = model_info.get("directory", "")
-        target_directory = os.path.join(base_directory, directory)
+        target_directory = os.path.join(args.directory, directory)
         ensure_directory_exists(target_directory)
         download_model(url, target_directory, model_name)
 
-
 if __name__ == "__main__":
-    models_json = sys.argv[1]
-    base_directory = sys.argv[2]
-    main(models_json, base_directory)
+    parser = argparse.ArgumentParser(description="Download models based on a JSON input.")
+    parser.add_argument('mode', choices=['base64', 'file'], help="Input mode: 'base64' for a base64 encoded string, 'file' for a JSON file path.")
+    parser.add_argument('input', help="Input string or file path, depending on the mode.")
+    parser.add_argument('directory', help="Base directory where models will be downloaded.")
+    
+    args = parser.parse_args()
+    main(args)
