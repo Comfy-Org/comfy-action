@@ -75,7 +75,7 @@ runs:
         pip3 install -r requirements.txt
         python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
         ls -R "${{ github.workspace }}/models/"
-      shell: bash
+      shell: bash -el {0}
 
     - name: Install dependencies
       if: ${{ inputs.os != 'windows' }}
@@ -229,6 +229,28 @@ runs:
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: application.log
+    
+    # - name: Call API to upload artifact details
+    #   shell: bash
+    #   run: |
+    #       curl -X POST "http://staging.api.drip.art/upload-artifact" \
+    #       -H "Content-Type: application/json" \
+    #       -d '{
+    #         "repo": "${{ github.repository }}",
+    #         "job_id": ${{ github.job }}',
+    #         "run_id": "${{ github.run_id }}",
+    #         "os": "${{ inputs.os }}",
+    #         "pytorch_version": "${{ inputs.torch_ver }}",
+    #         "cuda_version": "${{ inputs.cuda_version }}",
+    #         "artifact_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts",
+    #         "commit_hash": "${{ github.sha }}",
+    #         "branch_name": "${{ github.ref_name }}"
+    #       }'
+    
+    - name: Cleanup
+      if: always()
+      shell: bash
+      run: rm -rf ${{ github.workspace }}/*
 
     # - name: Cleanup
     #   if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
