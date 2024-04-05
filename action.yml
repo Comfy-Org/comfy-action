@@ -228,7 +228,7 @@ runs:
       if: ${{ success() || failure() }}
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
-        path: application.log
+        path: ${{ github.workspace }}/application.log
     
     # - name: Call API to upload artifact details
     #   shell: bash
