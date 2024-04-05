@@ -29,7 +29,6 @@ inputs:
     default: "600"
 runs:
   using: "composite"
-  runs-on: ${{ inputs.os }}
   steps:
     - name: Set up Python
       uses: actions/setup-python@v5
