@@ -217,6 +217,9 @@ runs:
 
     # =========== End of Windows Specific steps =====================
 
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+
     - name: Upload Output Files
       uses: actions/upload-artifact@v4
       with:
