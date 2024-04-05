@@ -146,8 +146,13 @@ runs:
       shell: powershell
       run: |
         $jsonContent = Get-Content ${{ inputs.workflow_json_path }} -Raw
+        Write-Output "##############################"
+        Write-Output $jsonContent
+        Write-Output "##############################"
         $apiJsonBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($jsonContent))
         python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
+        Write-Output python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
+        
 
     - name: Check if the server is running
       if: ${{ inputs.os != 'windows' }}
