@@ -27,9 +27,8 @@ def main(args):
     mode."""
     if args.mode == 'base64':
         models_json = base64.b64decode(args.input).decode("utf-8")
-    elif args.mode == 'file':
-        with open(args.input, 'r') as file:
-            models_json = file.read()
+    elif args.mode == 'raw':
+        models_json = args.input
     
     print(models_json)
     print("Base directory: " + args.directory)
@@ -44,8 +43,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download models based on a JSON input.")
-    parser.add_argument('mode', choices=['base64', 'file'], help="Input mode: 'base64' for a base64 encoded string, 'file' for a JSON file path.")
-    parser.add_argument('input', help="Input string or file path, depending on the mode.")
+    parser.add_argument('mode', choices=['base64', 'raw'], help="Input mode: 'base64' for a base64 encoded string, 'raw' for a JSON content itself.")
+    parser.add_argument('input', help="Input string or json content, depending on the mode.")
     parser.add_argument('directory', help="Base directory where models will be downloaded.")
     
     args = parser.parse_args()

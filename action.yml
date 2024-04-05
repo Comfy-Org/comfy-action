@@ -94,7 +94,7 @@ runs:
         cd ${{ github.action_path }}
         ls "${{ github.workspace }}"
         pip3 install -r requirements.txt
-        python3 download-models.py file '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+        python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
         ls -R "${{ github.workspace }}/models/"
       shell: bash
 
