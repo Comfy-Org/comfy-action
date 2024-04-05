@@ -135,11 +135,19 @@ runs:
         conda list
       shell: powershell
 
-    - name: Run Python application
+    - name: Run Python application quick test
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
         python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
+
+    - name: Run Python application with prompts
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        $jsonContent = Get-Content ${{ inputs.workflow_json_path }} -Raw
+        $apiJsonBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($jsonContent))
+        python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
 
     - name: Check if the server is running
       if: ${{ inputs.os != 'windows' }}
@@ -162,42 +170,12 @@ runs:
         echo "$PROMPT_ID"
 
 
-    # Failure on windows
-    # - name: Check if the server is running
-    #   if: ${{ inputs.os == 'windows' }}
-    #   run: |
-    #     cd $Env:GITHUB_ACTION_PATH
-    #     python poll_server_start.py
-    #   shell: powershell
-
-
     # - name: Sleep for debugging windows
     #   if: ${{ inputs.os == 'windows' && failure() }}
     #   run: |
     #     Start-Sleep -Seconds 3600 # Sleeps for 1 hour
     #   shell: powershell
 
-    # - name: Queue Prompt
-    #   id: queue_prompt
-    #   shell: powershell
-    #   if: ${{ inputs.os == 'windows' }}
-    #   run: |
-    #     cd $Env:GITHUB_ACTION_PATH
-    #     $FULL_PATH = "$Env:GITHUB_WORKSPACE/${{ inputs.workflow_json_path }}"
-    #     Write-Host "Full path to the JSON file: $FULL_PATH"
-    #     $PROMPT_ID = python queue_prompt.py "$FULL_PATH" 2>&1
-    #     Write-Host "prompt_id=$PROMPT_ID" >> $Env:GITHUB_OUTPUT
-    #     Write-Host "Script output: "
-    #     Write-Host "$PROMPT_ID"
-
-    # - name: Check Prompt Status and Get Output Files
-    #   shell: powershell
-    #   if: ${{ inputs.os == 'windows' }}
-    #   id: check_status
-    #   run: |
-    #     cd $Env:GITHUB_ACTION_PATH
-    #     Write-Host "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
-    #     python check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
     - name: Upload Output Files
       uses: actions/upload-artifact@v4
