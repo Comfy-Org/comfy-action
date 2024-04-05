@@ -97,7 +97,6 @@ runs:
       shell: bash
 
     - name: Queue Prompt
-      id: queue_prompt
       shell: bash
       if: ${{ inputs.os != 'windows' }}
       run: |
@@ -199,7 +198,6 @@ runs:
       shell: powershell
 
     - name: Queue Prompt (Windows)
-      id: queue_prompt
       shell: powershell
       if: ${{ inputs.os == 'windows' }}
       run: |
