@@ -248,21 +248,16 @@ runs:
     #       }'
     
     - name: Cleanup
-      if: always()
+      if: ${{ inputs.os != 'windows' && always() }}
       shell: bash
       run: rm -rf ${{ github.workspace }}/*
 
-    # - name: Cleanup
-    #   if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
-    #   shell: bash
-    #   run: rm -rf ${{ github.workspace }}/*
+    - name: Cleanup
+      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
+      shell: powershell
+      run: Remove-Item -Path "${{ github.workspace }}/*" -Recurse -Force
 
-    # - name: Cleanup
-    #   if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
-    #   shell: powershell
-    #   run: Remove-Item -Path "${{ github.workspace }}/*" -Recurse -Force
-
-    # - name: Cleanup Conda
-    #   if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
-    #   shell: bash -el {0}
-    #   run: conda deactivate && conda env remove --name comfyui && conda clean -p
+    - name: Cleanup Conda
+      if: ${{ inputs.os != 'windows' && ( always() ) }}
+      shell: bash -el {0}
+      run: conda deactivate && conda env remove --name comfyui && conda clean -p
