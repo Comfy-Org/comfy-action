@@ -25,11 +25,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        update-environment: false
-        python-version: 3.11
+    - name: Checkout Comfy repository
+      uses: actions/checkout@v4
 
     - name: Run macOS specific actions
       if: ${{ inputs.os == 'macos' }}

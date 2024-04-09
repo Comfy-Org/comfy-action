@@ -38,9 +38,6 @@ runs:
         conda list
       shell: bash -el {0}
     
-    - name: Checkout Comfy repository
-      uses: actions/checkout@v4
-
     - name: Download models
       run: |
         cd ${{ github.action_path }}

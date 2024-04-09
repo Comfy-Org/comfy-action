@@ -23,6 +23,12 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        update-environment: false
+        python-version: 3.11
+      
     - uses: conda-incubator/setup-miniconda@v3.0.3
       with:
         auto-update-conda: true
