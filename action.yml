@@ -36,9 +36,6 @@ runs:
         update-environment: false
         python-version: 3.11
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-
     # ===== MacOS/Linux steps ======
     - uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os != 'windows' }}
@@ -69,6 +66,9 @@ runs:
 
     - name: Checkout Comfy repository
       uses: actions/checkout@v4
+
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
 
     - name: Download models
       if: ${{ inputs.os != 'windows' }}
