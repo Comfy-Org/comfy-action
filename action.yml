@@ -87,6 +87,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        pwd
         python3 main.py --force-fp16 > application.log 2>&1 &
 
     - name: Check if the server is running
