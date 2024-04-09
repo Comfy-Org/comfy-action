@@ -85,12 +85,12 @@ runs:
       run: |
         cd ${{ github.action_path }}
         python3 poll_server_start.py
-      shell: bash
+      shell: bash bash -el {0}
 
     - name: Queue Prompt
       if: ${{ inputs.os != 'windows' }}
       id: queue_prompt
-      shell: bash
+      shell: bash bash -el {0}
       run: |
         cd ${{ github.action_path }}
         FULL_PATH="${GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
@@ -102,12 +102,12 @@ runs:
     
     - name: Check Prompt Status and Get Output Files
       if: ${{ inputs.os != 'windows' }}
-      shell: bash
+      shell: bash bash -el {0}
       id: check_status
       run: |
         cd ${{ github.action_path }}
         echo "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
-        python check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+        python3 check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
     ## Windows Steps
 
