@@ -109,16 +109,6 @@ runs:
         echo "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
         python check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
-    - name: Cleanup
-      if: ${{ inputs.os != 'windows' && always() }}
-      shell: bash
-      run: rm -rf ${{ github.workspace }}/*
-
-    - name: Cleanup Conda
-      if: ${{ inputs.os != 'windows' && always() }}
-      shell: bash -el {0}
-      run: conda deactivate && conda env remove --name comfyui && conda clean -p
-
     ## Windows Steps
 
     - name: Set up Python
@@ -229,11 +219,6 @@ runs:
     #     Start-Sleep -Seconds 3600 # Sleeps for 1 hour
     #   shell: powershell
 
-    - name: Cleanup
-      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
-      shell: powershell
-      run: Remove-Item -Path "${{ github.workspace }}/*" -Recurse -Force
-
     ## Common Ending Steps
     - name: Upload Output Files
       if: ${{ success() }}
@@ -246,9 +231,9 @@ runs:
       uses: actions/upload-artifact@v4
       if: ${{ success() || failure() }}
       with:
-        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
+        name: comfy-server-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
-    
+
     # - name: Call API to upload artifact details
     #   shell: bash
     #   run: |
@@ -264,3 +249,20 @@ runs:
     #         "commit_hash": "${{ github.sha }}",
     #         "branch_name": "${{ github.ref_name }}"
     #       }'
+
+    ## Mac/Linux Cleanup Steps
+    - name: Cleanup
+      if: ${{ inputs.os != 'windows' && always() }}
+      shell: bash
+      run: rm -rf ${{ github.workspace }}/*
+
+    - name: Cleanup Conda
+      if: ${{ inputs.os != 'windows' && always() }}
+      shell: bash -el {0}
+      run: conda deactivate && conda env remove --name comfyui && conda clean -p
+
+    ## Windows Cleanup Steps
+    - name: Cleanup
+      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
+      shell: powershell
+      run: Remove-Item -Path "${{ github.workspace }}/*" -Recurse -Force
