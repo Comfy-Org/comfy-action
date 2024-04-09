@@ -188,6 +188,7 @@ runs:
 
     - name: Queue Prompt (Windows)
       if: ${{ inputs.os == 'windows' }}
+      id: queue_prompt
       shell: powershell
       run: |
         cd $Env:GITHUB_ACTION_PATH
@@ -197,6 +198,16 @@ runs:
         Write-Output "prompt_id=$PROMPT_ID" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
         Write-Output "Script output: "
         Write-Output "$PROMPT_ID"
+
+    - name: Check Prompt Status and Get Output Files
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      id: check_status
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        Write-Output "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
+        python check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+
         
      # - name: Run Python application with prompts
     #   if: ${{ inputs.os == 'windows' }}
@@ -234,6 +245,7 @@ runs:
         path: ${{ github.workspace }}/application.log
 
     # - name: Call API to upload artifact details
+    #   if: ${{ success() }}
     #   shell: bash
     #   run: |
     #       curl -X POST "http://staging.api.drip.art/upload-artifact" \
