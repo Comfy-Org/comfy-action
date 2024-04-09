@@ -25,38 +25,215 @@ inputs:
 runs:
   using: "composite"
   steps:
+    ## Common Steps
     - name: Checkout Comfy repository
       uses: actions/checkout@v4
 
-    - name: Run macOS specific actions
+    ## Mac/Linux Steps
+    - uses: conda-incubator/setup-miniconda@v3.0.3
+      if: ${{ inputs.os != 'windows' }}
+      with:
+        auto-update-conda: true
+        miniconda-version: latest
+        activate-environment: comfyui
+        auto-activate-base: false
+
+    - name: Install Pytorch nightly for macOS.
       if: ${{ inputs.os == 'macos' }}
-      uses: ./mac-action.yml
-      with:
-        models-json: ${{ inputs.models-json }}
-        workflow_name: ${{ inputs.workflow_name }}
-        workflow_json_path: ${{ inputs.workflow_json_path }}
-        timeout: ${{ inputs.timeout }}
+      shell: bash -el {0}
+      run: |
+        conda install pytorch torchvision torchaudio -c pytorch-nightly
 
-    - name: Run linux specific actions
+    - name: Install Pytorch for compatible CUDA version for Linux.
       if: ${{ inputs.os == 'linux' }}
-      uses: ./linux-action.yml
-      with:
-        cuda_version: ${{ inputs.cuda_version }}
-        models-json: ${{ inputs.models-json }}
-        workflow_name: ${{ inputs.workflow_name }}
-        workflow_json_path: ${{ inputs.workflow_json_path }}
-        timeout: ${{ inputs.timeout }}
+      shell: bash -el {0}
+      run: |
+        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
     
-    - name: Run Windows specific actions
-      if: ${{ inputs.os == 'windows' }}
-      uses: ./windows-action.yml
-      with:
-        cuda_version: ${{ inputs.cuda_version }}
-        models-json: ${{ inputs.models-json }}
-        workflow_name: ${{ inputs.workflow_name }}
-        workflow_json_path: ${{ inputs.workflow_json_path }}
-        timeout: ${{ inputs.timeout }}
+    - name: "Check conda environment"
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        conda info
+        conda list
+      shell: bash -el {0}
 
+    - name: Download models
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        cd ${{ github.action_path }}
+        ls "${{ github.workspace }}"
+        pip3 install -r requirements.txt
+        python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+        ls -R "${{ github.workspace }}/models/"
+      shell: bash -el {0}
+
+    - name: Install dependencies
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        which pip3
+        pip3 install -r requirements.txt
+    
+    - name: Run Python application
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        python3 main.py --force-fp16 > application.log 2>&1 &
+
+    - name: Check if the server is running
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        cd ${{ github.action_path }}
+        python3 poll_server_start.py
+      shell: bash
+
+    - name: Queue Prompt
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash
+      run: |
+        cd ${{ github.action_path }}
+        FULL_PATH="${GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
+        echo "Full path to the JSON file: $FULL_PATH"
+        PROMPT_ID=$(python3 queue_prompt.py "$FULL_PATH" 2>&1)
+        echo "prompt_id=$PROMPT_ID" >> $GITHUB_OUTPUT
+        echo "Script output: "
+        echo "$PROMPT_ID"   
+    
+    - name: Check Prompt Status and Get Output Files
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash
+      id: check_status
+      run: |
+        cd ${{ github.action_path }}
+        echo "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
+        python check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+
+    - name: Cleanup
+      if: ${{ inputs.os != 'windows' && always() }}
+      shell: bash
+      run: rm -rf ${{ github.workspace }}/*
+
+    - name: Cleanup Conda
+      if: ${{ inputs.os != 'windows' && always() }}
+      shell: bash -el {0}
+      run: conda deactivate && conda env remove --name comfyui && conda clean -p
+
+    ## Windows Steps
+
+    - name: Set up Python
+      if: ${{ inputs.os == 'windows' }}
+      uses: actions/setup-python@v5
+      with:
+        update-environment: false
+        python-version: 3.11
+      
+    - uses: conda-incubator/setup-miniconda@v3.0.3
+      if: ${{ inputs.os == 'windows' }}
+      with:
+        auto-update-conda: true
+        miniconda-version: latest
+        activate-environment: comfyui
+      continue-on-error: true
+
+    - name: Install Pytorch for compatible CUDA version for Windows.
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia --yes
+
+    - name: "Check conda environment on Windows"
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        conda info
+        conda list
+      shell: powershell
+
+    - name: Download models
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        ls "$Env:GITHUB_WORKSPACE"
+        pip install -r requirements.txt
+        $modelsJsonBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('${{ inputs.models-json }}'))
+        python download-models.py base64 "$modelsJsonBase64" "$Env:GITHUB_WORKSPACE/models/"
+      shell: powershell
+
+    - name: Install dependencies
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        Get-Command pip
+        pip install -r requirements.txt
+
+    - name: "Check conda environment on Windows"
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        conda info
+        conda list
+      shell: powershell
+
+    - name: Run Python application quick test
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
+  
+    - name: Run Python application with prompts
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        $envGithubWorkspace = $Env:GITHUB_WORKSPACE
+        Write-Output "##############################"
+        Write-Output $envGithubWorkspace
+        Write-Output "##############################"
+        Start-Process powershell -ArgumentList "-File", "${{ github.action_path }}\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`""
+
+
+    - name: Check if the server is running (Windows)
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        python poll_server_start.py
+      shell: powershell
+
+    - name: Queue Prompt (Windows)
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        $FULL_PATH="${Env:GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
+        Write-Output "Full path to the JSON file: $FULL_PATH"
+        $PROMPT_ID = python queue_prompt.py "$FULL_PATH" 2>&1
+        Write-Output "prompt_id=$PROMPT_ID" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "Script output: "
+        Write-Output "$PROMPT_ID"
+        
+     # - name: Run Python application with prompts
+    #   if: ${{ inputs.os == 'windows' }}
+    #   shell: powershell
+    #   run: |
+    #     $jsonContent = Get-Content ${{ inputs.workflow_json_path }} -Raw
+    #     $command = ""
+    #     Start-Process powershell -ArgumentList "-NoProfile", "-Command", "conda activate $envName && python $Env:GITHUB_WORKSPACE/main.py --force-fp16"
+    #     Write-Output "##############################"
+    #     Write-Output $jsonContent
+    #     Write-Output "##############################"
+    #     $apiJsonBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($jsonContent))
+    #     python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
+    #     Write-Output python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
+
+    # - name: Sleep for debugging windows
+    #   if: ${{ inputs.os == 'windows' && failure() }}
+    #   run: |
+    #     Start-Sleep -Seconds 3600 # Sleeps for 1 hour
+    #   shell: powershell
+
+    - name: Cleanup
+      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
+      shell: powershell
+      run: Remove-Item -Path "${{ github.workspace }}/*" -Recurse -Force
+
+    ## Common Ending Steps
     - name: Upload Output Files
       if: ${{ success() }}
       uses: actions/upload-artifact@v4
