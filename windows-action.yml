@@ -1,0 +1,124 @@
+name: "Run ComfyUI on Linux"
+description: "Run a comfyui workflow on Linux."
+inputs:
+  cuda_version:
+    description: "CUDA Version. Will be used in the conda install command for pytorch. 11.8 or 12.1"
+    required: false
+    default: "12.1"
+  models-json:
+    description: 'JSON string containing models and their download URLs. The models will be downloaded into the exact directory relative to /ComfyUI/models/. eg { "model_name": { url: "https://example.com/model.pth", "directory": "checkpoints" } }'
+    required: true
+  workflow_name:
+    description: "Name of the workflow to run. This is used to identify the workflow in the logs."
+    required: true
+  workflow_json_path:
+    description: "Path (relative to the root of the Github repo) of the Workflow JSON to run. Must be API format JSON."
+    required: true
+  timeout:
+    description: "Timeout for the workflow (in seconds)"
+    required: false
+    default: "600"
+
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: conda-incubator/setup-miniconda@v3.0.3
+      with:
+        auto-update-conda: true
+        miniconda-version: latest
+        activate-environment: comfyui
+      continue-on-error: true
+
+    - name: Install Pytorch for compatible CUDA version for Windows.
+      shell: powershell
+      run: |
+        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia --yes
+
+    - name: "Check conda environment on Windows"
+      run: |
+        conda info
+        conda list
+      shell: powershell
+
+    - name: Download models
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        ls "$Env:GITHUB_WORKSPACE"
+        pip install -r requirements.txt
+        $modelsJsonBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('${{ inputs.models-json }}'))
+        python download-models.py base64 "$modelsJsonBase64" "$Env:GITHUB_WORKSPACE/models/"
+      shell: powershell
+
+    - name: Install dependencies
+      shell: powershell
+      run: |
+        Get-Command pip
+        pip install -r requirements.txt
+
+    - name: "Check conda environment on Windows"
+      run: |
+        conda info
+        conda list
+      shell: powershell
+
+    - name: Run Python application quick test
+      shell: powershell
+      run: |
+        python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
+  
+    - name: Run Python application with prompts
+      shell: powershell
+      run: |
+        $envGithubWorkspace = $Env:GITHUB_WORKSPACE
+        Write-Output "##############################"
+        Write-Output $envGithubWorkspace
+        Write-Output "##############################"
+        Start-Process powershell -ArgumentList "-File", "${{ github.action_path }}\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`""
+
+
+    - name: Check if the server is running (Windows)
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        python poll_server_start.py
+      shell: powershell
+
+    - name: Queue Prompt (Windows)
+      shell: powershell
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        $FULL_PATH="${Env:GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
+        Write-Output "Full path to the JSON file: $FULL_PATH"
+        $PROMPT_ID = python queue_prompt.py "$FULL_PATH" 2>&1
+        Write-Output "prompt_id=$PROMPT_ID" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "Script output: "
+        Write-Output "$PROMPT_ID"
+        
+     # - name: Run Python application with prompts
+    #   if: ${{ inputs.os == 'windows' }}
+    #   shell: powershell
+    #   run: |
+    #     $jsonContent = Get-Content ${{ inputs.workflow_json_path }} -Raw
+    #     $command = ""
+    #     Start-Process powershell -ArgumentList "-NoProfile", "-Command", "conda activate $envName && python $Env:GITHUB_WORKSPACE/main.py --force-fp16"
+    #     Write-Output "##############################"
+    #     Write-Output $jsonContent
+    #     Write-Output "##############################"
+    #     $apiJsonBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($jsonContent))
+    #     python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
+    #     Write-Output python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
+
+   
+
+    # - name: Sleep for debugging windows
+    #   if: ${{ inputs.os == 'windows' && failure() }}
+    #   run: |
+    #     Start-Sleep -Seconds 3600 # Sleeps for 1 hour
+    #   shell: powershell
+
+    # =========== End of Windows Specific steps =====================
+
+    - name: Cleanup
+      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
+      shell: powershell
+      run: Remove-Item -Path "${{ github.workspace }}/*" -Recurse -Force

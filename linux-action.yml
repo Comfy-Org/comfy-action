@@ -1,0 +1,106 @@
+name: "Run ComfyUI on Linux"
+description: "Run a comfyui workflow on Linux."
+inputs:
+  cuda_version:
+    description: "CUDA Version. Will be used in the conda install command for pytorch. 11.8 or 12.1"
+    required: false
+    default: "12.1"
+  models-json:
+    description: 'JSON string containing models and their download URLs. The models will be downloaded into the exact directory relative to /ComfyUI/models/. eg { "model_name": { url: "https://example.com/model.pth", "directory": "checkpoints" } }'
+    required: true
+  workflow_name:
+    description: "Name of the workflow to run. This is used to identify the workflow in the logs."
+    required: true
+  workflow_json_path:
+    description: "Path (relative to the root of the Github repo) of the Workflow JSON to run. Must be API format JSON."
+    required: true
+  timeout:
+    description: "Timeout for the workflow (in seconds)"
+    required: false
+    default: "600"
+
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: conda-incubator/setup-miniconda@v3.0.3
+      with:
+        auto-update-conda: true
+        miniconda-version: latest
+        activate-environment: comfyui
+        auto-activate-base: false
+
+    - name: Install Pytorch for compatible CUDA version for Linux.
+      if: ${{ inputs.os == 'linux' }}
+      shell: bash -el {0}
+      run: |
+        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
+
+    - name: "Check conda environment on Linux"
+      run: |
+        conda info
+        conda list
+      shell: bash -el {0}
+    
+    - name: Checkout Comfy repository
+      uses: actions/checkout@v4
+
+
+    - name: Download models
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        cd ${{ github.action_path }}
+        ls "${{ github.workspace }}"
+        pip3 install -r requirements.txt
+        python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+        ls -R "${{ github.workspace }}/models/"
+      shell: bash -el {0}
+
+    - name: Install dependencies
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        which pip3
+        pip3 install -r requirements.txt
+    - name: Run Python application
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        python3 main.py --force-fp16 > application.log 2>&1 &
+
+    - name: Check if the server is running
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        cd ${{ github.action_path }}
+        python3 poll_server_start.py
+      shell: bash
+
+    - name: Queue Prompt
+      shell: bash
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        cd ${{ github.action_path }}
+        FULL_PATH="${GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
+        echo "Full path to the JSON file: $FULL_PATH"
+        PROMPT_ID=$(python3 queue_prompt.py "$FULL_PATH" 2>&1)
+        echo "prompt_id=$PROMPT_ID" >> $GITHUB_OUTPUT
+        echo "Script output: "
+        echo "$PROMPT_ID"   
+    
+    - name: Check Prompt Status and Get Output Files
+      shell: bash
+      id: check_status
+      run: |
+        cd ${{ github.action_path }}
+        echo "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
+        python check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+
+    - name: Cleanup
+      if: ${{ always() }}
+      shell: bash
+      run: rm -rf ${{ github.workspace }}/*
+
+    - name: Cleanup Conda
+      if: ${{  always() }}
+      shell: bash -el {0}
+      run: conda deactivate && conda env remove --name comfyui && conda clean -p
