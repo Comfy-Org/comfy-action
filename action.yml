@@ -199,7 +199,7 @@ runs:
         Write-Output "Script output: "
         Write-Output "$PROMPT_ID"
 
-    - name: Check Prompt Status and Get Output Files
+    - name: Check Prompt Status and Get Output Files (Windows)
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       id: check_status
