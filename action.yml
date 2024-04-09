@@ -273,7 +273,7 @@ runs:
       run: conda deactivate && conda env remove --name comfyui && conda clean -p
 
     ## Windows Cleanup Steps
-    - name: Cleanup
+    - name: Cleanup output files only
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       shell: powershell
-      run: Remove-Item -Path "${{ github.workspace }}/*" -Recurse -Force
+      run: Remove-Item -Path "${{ github.workspace }}/output/*" -Recurse -Force
