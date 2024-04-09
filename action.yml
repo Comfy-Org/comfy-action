@@ -133,9 +133,6 @@ runs:
         conda list
       shell: powershell
 
-    - name: Checkout Comfy repository
-      uses: actions/checkout@v4
-
     - name: Download models
       if: ${{ inputs.os == 'windows' }}
       run: |
@@ -219,6 +216,7 @@ runs:
     # =========== End of Windows Specific steps =====================
 
     - name: Upload Output Files
+      if: ${{ success() }}
       uses: actions/upload-artifact@v4
       with:
         name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
