@@ -25,7 +25,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    ## Common Steps
+    ## Common Starting Steps
     - name: Checkout Comfy repository
       uses: actions/checkout@v4
 
@@ -50,7 +50,7 @@ runs:
       run: |
         conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
     
-    - name: "Check conda environment"
+    - name: "Check conda environment on Mac/Linux"
       if: ${{ inputs.os != 'windows' }}
       run: |
         conda info
