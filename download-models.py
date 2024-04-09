@@ -12,9 +12,15 @@ def ensure_directory_exists(path):
         print("Created directory: " + path)
 
 def download_model(url, directory, model_name):
-    """Download a model file from a URL into a specific directory."""
-    print(f"Downloading {model_name} from {url} to {directory}")
+    """Download a model file from a URL into a specific directory.
+    Skip download if the file already exists."""
+    print(f"Checking {model_name} in {directory}")
     file_path = os.path.join(directory, model_name)
+    if os.path.exists(file_path):
+        print(f"{model_name} already exists in {directory}. Skipping download.")
+        return
+    
+    print(f"Downloading {model_name} from {url} to {directory}")
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         with open(file_path, 'wb') as f:
@@ -30,6 +36,7 @@ def main(args):
     elif args.mode == 'raw':
         models_json = args.input
     
+    print("Processing input:")
     print(models_json)
     print("Base directory: " + args.directory)
     models = json.loads(models_json)
