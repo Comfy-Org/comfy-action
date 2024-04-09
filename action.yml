@@ -245,11 +245,6 @@ runs:
     #         "commit_hash": "${{ github.sha }}",
     #         "branch_name": "${{ github.ref_name }}"
     #       }'
-
-    - name: Sleep for debugging
-      shell: bash
-      run: | # Sleeps for 5 minutes
-        sleep 300
     
     - name: Cleanup
       if: ${{ inputs.os != 'windows' && always() }}
