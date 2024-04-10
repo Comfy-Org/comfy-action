@@ -89,7 +89,6 @@ runs:
 
     - name: Queue Prompt
       if: ${{ inputs.os != 'windows' }}
-      id: queue_prompt
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
@@ -188,7 +187,6 @@ runs:
 
     - name: Queue Prompt (Windows)
       if: ${{ inputs.os == 'windows' }}
-      id: queue_prompt
       shell: powershell
       run: |
         cd $Env:GITHUB_ACTION_PATH
