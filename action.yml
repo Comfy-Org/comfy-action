@@ -96,7 +96,6 @@ runs:
     - name: Queue Prompt
       id: queue_prompt_unix
       if: ${{ inputs.os != 'windows' }}
-      id: queue_prompt_unix
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
