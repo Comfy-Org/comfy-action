@@ -138,14 +138,14 @@ runs:
         conda list
       shell: powershell
 
+    # Keep in mind the self runner must be setup with a model in GITHUB_ACTION_PATH
     - name: Download models
       if: ${{ inputs.os == 'windows' }}
       run: |
         cd $Env:GITHUB_ACTION_PATH
         ls "$Env:GITHUB_WORKSPACE"
         pip install -r requirements.txt
-        $modelsJsonBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('${{ inputs.models-json }}'))
-        python download-models.py base64 "$modelsJsonBase64" "$Env:GITHUB_WORKSPACE/models/"
+        cp "$Env:GITHUB_ACTION_PATH/v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/"
       shell: powershell
 
     - name: Install dependencies
