@@ -28,6 +28,9 @@ inputs:
   gcs_bucket_name:
     description: "Name of the GCS bucket to upload the output files to. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
     required: false
+  output_prefix:
+    description: "Prefix for the output files. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -246,6 +249,7 @@ runs:
       with:
         path: ${{ github.workspace }}/output
         destination: ${{ inputs.gcs_bucket_name }}/output-files/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+        glob: "${{ inputs.output_prefix }}*"
 
     - name: Upload log file to GCS
       if: ${{ success() || failure() }}
