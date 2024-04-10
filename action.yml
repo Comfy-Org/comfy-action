@@ -43,7 +43,7 @@ runs:
       if: ${{ success() }}
       uses: google-github-actions/upload-cloud-storage@v2
       with:
-        path: ${{ github.workspace }}/output/**
+        path: ${{ github.workspace }}/output
         destination: gs://${{ inputs.gcs_bucket_name }}/output-files/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-${{ github.run_id }}
 
     - name: Upload log file to GCS
