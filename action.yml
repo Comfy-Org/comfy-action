@@ -95,6 +95,7 @@ runs:
 
     - name: Queue Prompt
       if: ${{ inputs.os != 'windows' }}
+      id: queue_prompt_unix
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
@@ -110,8 +111,8 @@ runs:
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
-        echo "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
-        python3 check_prompt_status.py ${{ steps.queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+        echo "Prompt ID: ${{ steps.queue_prompt_unix.outputs.prompt_id }}"
+        python3 check_prompt_status.py ${{ steps.queue_prompt_unix.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
     ## Windows Steps
     - name: Set up Python
