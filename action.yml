@@ -22,6 +22,12 @@ inputs:
     description: "Timeout for the workflow (in seconds)"
     required: false
     default: "600"
+  google_credentials: 
+    description: "Service Account JSON for uploading to GCS. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
+    required: false
+  gcs_bucket_name:
+    description: "Name of the GCS bucket to upload the output files to. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -90,6 +96,7 @@ runs:
     - name: Queue Prompt
       id: queue_prompt_unix
       if: ${{ inputs.os != 'windows' }}
+      id: queue_prompt_unix
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
@@ -229,36 +236,45 @@ runs:
     #   shell: powershell
 
     ## Common Ending Steps
-    - name: Upload Output Files
+    - uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ inputs.google_credentials }}'
+
+    - name: Upload Output Files to GCS
       if: ${{ success() }}
-      uses: actions/upload-artifact@v4
+      id: upload-output-files
+      uses: google-github-actions/upload-cloud-storage@v2
       with:
-        name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
-        path: ${{ github.workspace }}/output/**
+        path: ${{ github.workspace }}/models
+        destination: ${{ inputs.gcs_bucket_name }}/output-files/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
 
-    - name: Upload log file
-      uses: actions/upload-artifact@v4
+    - name: Upload log file to GCS
       if: ${{ success() || failure() }}
+      id: upload-log-files
+      uses: google-github-actions/upload-cloud-storage@v2
       with:
-        name: comfy-server-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
+        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
 
-    # - name: Call API to upload artifact details
-    #   if: ${{ success() }}
-    #   shell: bash
-    #   run: |
-    #       curl -X POST "http://staging.api.drip.art/upload-artifact" \
-    #       -H "Content-Type: application/json" \
-    #       -d '{
-    #         "repo": "${{ github.repository }}",
-    #         "job_id": ${{ github.job }}',
-    #         "run_id": "${{ github.run_id }}",
-    #         "os": "${{ inputs.os }}",
-    #         "cuda_version": "${{ inputs.cuda_version }}",
-    #         "artifact_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts",
-    #         "commit_hash": "${{ github.sha }}",
-    #         "branch_name": "${{ github.ref_name }}"
-    #       }'
+    - name: Call API to upload artifact details
+      if: ${{ success() }}
+      shell: bash
+      run: |
+        curl -X POST "https://api-frontend-dev-qod3oz2v2q-uc.a.run.app/upload-artifact" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "repo": "${{ github.repository }}",
+          "job_id": "${{ github.job }}",
+          "run_id": "${{ github.run_id }}",
+          "os": "${{ inputs.os }}",
+          "cuda_version": "${{ inputs.cuda_version }}",
+          "output_files_gcs_paths": "${{ steps.upload-output-files.outputs.uploaded }}",
+          "commit_hash": "${{ github.sha }}",
+          "branch_name": "${{ github.ref_name }}",
+          "bucket_name": "${{ inputs.gcs_bucket_name }}",
+          "workflow_name": "${{ inputs.workflow_name }}"
+        }'
+
 
     ## Mac/Linux Cleanup Steps
     - name: Cleanup
