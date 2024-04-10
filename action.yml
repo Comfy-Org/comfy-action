@@ -288,7 +288,7 @@ runs:
     - name: Cleanup Conda
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       shell: bash -el {0}
-      run: conda deactivate && conda env remove --name comfyui && conda clean -p
+      run: conda deactivate && conda env remove --name comfyui && conda clean -all
 
     ## Windows Cleanup Steps
     - name: Cleanup output files only
