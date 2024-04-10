@@ -59,18 +59,12 @@ runs:
           "run_id": "${{ github.run_id }}",
           "os": "${{ inputs.os }}",
           "cuda_version": "${{ inputs.cuda_version }}",
-          "output_files_gcs_paths": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts",
+          "output_files_gcs_paths": "${{ steps.upload-output-files.outputs.uploaded }}",
           "commit_hash": "${{ github.sha }}",
           "branch_name": "${{ github.ref_name }}",
           "bucket_name": "${{ inputs.gcs_bucket_name }}",
           "workflow_name": "${{ inputs.workflow_name }}"
         }'
-    
-    - name: Print bucket output names
-      if: ${{ success() }}
-      run: |
-        echo "Output files uploaded to GCS bucket: ${{ steps.upload-output-files.outputs.uploaded }}"
-      shell: bash
 
     - name: Upload log file to GCS
       if: ${{ success() || failure() }}
