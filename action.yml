@@ -35,6 +35,32 @@ runs:
     - name: Checkout Comfy repository
       uses: actions/checkout@v4
 
+    - uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ inputs.google_credentials }}'
+
+    - name: Upload Output Files to GCS
+      if: ${{ success() }}
+      id: upload-output-files
+      uses: google-github-actions/upload-cloud-storage@v2
+      with:
+        path: ${{ github.workspace }}/output
+        destination: ${{ inputs.gcs_bucket_name }}/output-files/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+    
+    - name: Print bucket output names
+      if: ${{ success() }}
+      run: |
+        echo "Output files uploaded to GCS bucket: ${{ steps.upload-output-files.outputs.uploaded }}"
+      shell: bash
+
+    - name: Upload log file to GCS
+      if: ${{ success() || failure() }}
+      id: upload-log-files
+      uses: google-github-actions/upload-cloud-storage@v2
+      with:
+        path: ${{ github.workspace }}/application.log
+        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+
     ## Mac/Linux Steps
     - uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os != 'windows' }}
@@ -232,24 +258,7 @@ runs:
     #   shell: powershell
 
     ## Common Ending Steps
-    - uses: 'google-github-actions/auth@v2'
-      with:
-        credentials_json: '${{ inputs.google_credentials }}'
-
-    - name: Upload Output Files to GCS
-      if: ${{ success() }}
-      uses: google-github-actions/upload-cloud-storage@v2
-      with:
-        path: ${{ github.workspace }}/output
-        destination: ${{ inputs.gcs_bucket_name }}/output-files/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
-
-    - name: Upload log file to GCS
-      if: ${{ success() || failure() }}
-      uses: google-github-actions/upload-cloud-storage@v2
-      with:
-        path: ${{ github.workspace }}/application.log
-        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
-
+    
 
     # - name: Call API to upload artifact details
     #   if: ${{ success() }}
