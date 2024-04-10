@@ -222,11 +222,11 @@ runs:
     #     python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
     #     Write-Output python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
 
-    - name: Sleep for debugging windows
-      if: ${{ inputs.os == 'windows' && failure() }}
-      run: |
-        Start-Sleep -Seconds 3600 # Sleeps for 1 hour
-      shell: powershell
+    # - name: Sleep for debugging windows
+    #   if: ${{ inputs.os == 'windows' && failure() }}
+    #   run: |
+    #     Start-Sleep -Seconds 3600 # Sleeps for 1 hour
+    #   shell: powershell
 
     ## Common Ending Steps
     - name: Upload Output Files
