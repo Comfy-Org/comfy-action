@@ -192,7 +192,7 @@ runs:
         cd $Env:GITHUB_ACTION_PATH
         $FULL_PATH="${Env:GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
         Write-Output "Full path to the JSON file: $FULL_PATH"
-        $PROMPT_ID = python queue_prompt.py "$FULL_PATH" 2>&1
+        $PROMPT_ID = python queue_prompt.py "$FULL_PATH"
         Write-Output "prompt_id=$PROMPT_ID" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
         Write-Output "Script output: "
         Write-Output "$PROMPT_ID"
