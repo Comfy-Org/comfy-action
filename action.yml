@@ -144,7 +144,7 @@ runs:
         cd $Env:GITHUB_ACTION_PATH
         ls "$Env:GITHUB_WORKSPACE"
         pip install -r requirements.txt
-        cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/"
+        cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
       shell: powershell
 
     - name: Install dependencies
@@ -260,12 +260,12 @@ runs:
 
     ## Mac/Linux Cleanup Steps
     - name: Cleanup
-      if: ${{ inputs.os != 'windows' && always() }}
+      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       shell: bash
       run: rm -rf ${{ github.workspace }}/*
 
     - name: Cleanup Conda
-      if: ${{ inputs.os != 'windows' && always() }}
+      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       shell: bash -el {0}
       run: conda deactivate && conda env remove --name comfyui && conda clean -p
 
