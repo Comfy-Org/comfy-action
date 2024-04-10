@@ -102,7 +102,6 @@ runs:
     - name: Check Prompt Status and Get Output Files
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
-      id: check_status
       run: |
         cd ${{ github.action_path }}
         echo "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
@@ -200,7 +199,6 @@ runs:
     - name: Check Prompt Status and Get Output Files (Windows)
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
-      id: check_status
       run: |
         cd $Env:GITHUB_ACTION_PATH
         Write-Output "Prompt ID: ${{ steps.queue_prompt.outputs.prompt_id }}"
