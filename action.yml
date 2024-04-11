@@ -38,7 +38,14 @@ runs:
     - name: Checkout Comfy repository
       uses: actions/checkout@v4
 
+
     ## Mac/Linux Steps
+    - name: Get start time
+      id: start_time_unix
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        echo "start_time=$(date +%s) >> $GITHUB_OUTPUT
+
     - uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os != 'windows' }}
       with:
@@ -58,7 +65,7 @@ runs:
       shell: bash -el {0}
       run: |
         conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
-    
+
     - name: "Check conda environment on Mac/Linux"
       if: ${{ inputs.os != 'windows' }}
       run: |
@@ -82,7 +89,7 @@ runs:
       run: |
         which pip3
         pip3 install -r requirements.txt
-    
+
     - name: Run Python application
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
@@ -107,8 +114,8 @@ runs:
         PROMPT_ID=$(python3 queue_prompt.py "$FULL_PATH" 2>&1)
         echo "prompt_id=$PROMPT_ID" >> $GITHUB_OUTPUT
         echo "Script output: "
-        echo "$PROMPT_ID"   
-    
+        echo "$PROMPT_ID"
+
     - name: Check Prompt Status and Get Output Files
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
@@ -118,6 +125,16 @@ runs:
         python3 check_prompt_status.py ${{ steps.queue_prompt_unix.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
     ## Windows Steps
+    - name: Get start time (Windows)
+      id: start_time_win
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        $currentTime = Get-Date -UFormat "%s"
+        Write-Output "start_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "Start time: "
+        Write-Output "$start_time
+      shell: powershell
+
     - name: Set up Python
       if: ${{ inputs.os == 'windows' }}
       uses: actions/setup-python@v5
@@ -275,7 +292,8 @@ runs:
           "commit_hash": "${{ github.sha }}",
           "branch_name": "${{ github.ref_name }}",
           "bucket_name": "${{ inputs.gcs_bucket_name }}",
-          "workflow_name": "${{ inputs.workflow_name }}"
+          "workflow_name": "${{ inputs.workflow_name }}",
+          "start_time": "${{ steps.start_time_unix.outputs.start_time }}"
         }'
 
     - name: Call API to upload artifact details
@@ -296,6 +314,7 @@ runs:
             "branch_name" = "${{ github.ref_name }}"
             "bucket_name" = "${{ inputs.gcs_bucket_name }}"
             "workflow_name" = "${{ inputs.workflow_name }}"
+            "start_time" = "${{ steps.start_time_unix.outputs.start_time }}"
           } | ConvertTo-Json)
 
     ## Mac/Linux Cleanup Steps
