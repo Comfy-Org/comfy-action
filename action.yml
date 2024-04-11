@@ -282,8 +282,9 @@ runs:
       if: ${{ inputs.os == 'windows' && success() }}
       shell: powershell
       run: |
-        curl -X POST "https://api-frontend-dev-qod3oz2v2q-uc.a.run.app/upload-artifact" `
-          -H "Content-Type: application/json" `
+        Invoke-WebRequest -Uri "https://api-frontend-dev-qod3oz2v2q-uc.a.run.app/upload-artifact" `
+          -Method POST `
+          -Headers @{"Content-Type"="application/json"} `
           -Body (@{
             "repo" = "${{ github.repository }}"
             "job_id" = "${{ github.job }}"
