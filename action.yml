@@ -259,8 +259,8 @@ runs:
         path: ${{ github.workspace }}/application.log
         destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
 
-    - name: Call API to upload artifact details
-      if: ${{ success() }}
+    - name: Call API to upload artifact details (Mac/Linux)
+      if: ${{ inputs.os != 'windows' && success() }}
       shell: bash
       run: |
         curl -X POST "https://api-frontend-dev-qod3oz2v2q-uc.a.run.app/upload-artifact" \
@@ -278,6 +278,24 @@ runs:
           "workflow_name": "${{ inputs.workflow_name }}"
         }'
 
+    - name: Call API to upload artifact details
+      if: ${{ inputs.os == 'windows' && success() }}
+      shell: powershell
+      run: |
+        curl -X POST "https://api-frontend-dev-qod3oz2v2q-uc.a.run.app/upload-artifact" `
+          -H "Content-Type: application/json" `
+          -Body (@{
+            "repo" = "${{ github.repository }}"
+            "job_id" = "${{ github.job }}"
+            "run_id" = "${{ github.run_id }}"
+            "os" = "${{ inputs.os }}"
+            "cuda_version" = "${{ inputs.cuda_version }}"
+            "output_files_gcs_paths" = "${{ steps.upload-output-files.outputs.uploaded }}"
+            "commit_hash" = "${{ github.sha }}"
+            "branch_name" = "${{ github.ref_name }}"
+            "bucket_name" = "${{ inputs.gcs_bucket_name }}"
+            "workflow_name" = "${{ inputs.workflow_name }}"
+          } | ConvertTo-Json)
 
     ## Mac/Linux Cleanup Steps
     - name: Cleanup
