@@ -293,7 +293,6 @@ runs:
           "branch_name": "${{ github.ref_name }}",
           "bucket_name": "${{ inputs.gcs_bucket_name }}",
           "workflow_name": "${{ inputs.workflow_name }}",
-          "start_time": "${{ steps.start_time_unix.outputs.start_time }}"
         }'
 
     - name: Call API to upload artifact details
@@ -313,7 +312,6 @@ runs:
             "branch_name" = "${{ github.ref_name }}"
             "bucket_name" = "${{ inputs.gcs_bucket_name }}"
             "workflow_name" = "${{ inputs.workflow_name }}"
-            "start_time" = "${{ steps.start_time_win.outputs.start_time }}"
           } | ConvertTo-Json)
 
     ## Mac/Linux Cleanup Steps
