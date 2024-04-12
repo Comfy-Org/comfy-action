@@ -330,8 +330,8 @@ runs:
             "commit_hash" = "${{ github.sha }}"
             "branch_name" = "${{ github.ref_name }}"
             "bucket_name" = "${{ inputs.gcs_bucket_name }}"
-            "workflow_name" = "${{ inputs.workflow_name }}",
-            "start_time" = "${{ steps.start_time_win.outputs.start_time }}",
+            "workflow_name" = "${{ inputs.workflow_name }}"
+            "start_time" = "${{ steps.start_time_win.outputs.start_time }}"
             "end_time" = "${{ steps.end_time_win.outputs.end_time }}"
           } | ConvertTo-Json)
 
