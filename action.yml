@@ -284,7 +284,6 @@ runs:
         -H "Content-Type: application/json" \
         -d '{
           "repo": "${{ github.repository }}",
-          "job_id": "${{ github.job }}",
           "run_id": "${{ github.run_id }}",
           "os": "${{ inputs.os }}",
           "cuda_version": "${{ inputs.cuda_version }}",
@@ -305,7 +304,6 @@ runs:
           -Headers @{"Content-Type"="application/json"} `
           -Body (@{
             "repo" = "${{ github.repository }}"
-            "job_id" = "${{ github.job }}"
             "run_id" = "${{ github.run_id }}"
             "os" = "${{ inputs.os }}"
             "cuda_version" = "${{ inputs.cuda_version }}"
