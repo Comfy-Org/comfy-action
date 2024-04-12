@@ -227,7 +227,7 @@ runs:
       id: start_time_win
       if: ${{ inputs.os == 'windows' }}
       run: |
-        $currentTime = Get-Date -UFormat "%s"
+        $currentTime = [int][double]::Parse((Get-Date -UFormat "%s"))
         Write-Output "start_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
         Write-Output "Start time: "
         Write-Output "$currentTime"
@@ -246,7 +246,7 @@ runs:
       id: end_time_win
       if: ${{ inputs.os == 'windows' }}
       run: |
-        $currentTime = Get-Date -UFormat "%s"
+        $currentTime = [int][double]::Parse((Get-Date -UFormat "%s"))
         Write-Output "end_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
         Write-Output "End time: "
         Write-Output "$currentTime"
@@ -331,8 +331,8 @@ runs:
             "branch_name" = "${{ github.ref_name }}"
             "bucket_name" = "${{ inputs.gcs_bucket_name }}"
             "workflow_name" = "${{ inputs.workflow_name }}"
-            "start_time" = "${{ steps.start_time_win.outputs.start_time }}"
-            "end_time" = "${{ steps.end_time_win.outputs.end_time }}"
+            "start_time" = ${{ steps.start_time_win.outputs.start_time }}
+            "end_time" = ${{ steps.end_time_win.outputs.end_time }}
           } | ConvertTo-Json)
 
     ## Mac/Linux Cleanup Steps
