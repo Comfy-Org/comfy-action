@@ -133,7 +133,7 @@ runs:
         $currentTime = Get-Date -UFormat "%s"
         Write-Output "start_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
         Write-Output "Start time: "
-        Write-Output "$currentTime
+        Write-Output "$currentTime"
       shell: powershell
 
     - name: Set up Python
