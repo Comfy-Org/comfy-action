@@ -40,13 +40,6 @@ runs:
 
 
     ## Mac/Linux Steps
-    - name: Get start time Unix
-      id: start_time_unix
-      shell: bash
-      if: ${{ inputs.os != 'windows' }}
-      run: |
-        echo "start_time=$(date +%s)" >> $GITHUB_OUTPUT
-
     - uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os != 'windows' }}
       with:
@@ -117,6 +110,13 @@ runs:
         echo "Script output: "
         echo "$PROMPT_ID"
 
+    - name: Get start time Unix
+      id: start_time_unix
+      shell: bash
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        echo "start_time=$(date +%s)" >> $GITHUB_OUTPUT
+
     - name: Check Prompt Status and Get Output Files
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
@@ -124,18 +124,15 @@ runs:
         cd ${{ github.action_path }}
         echo "Prompt ID: ${{ steps.queue_prompt_unix.outputs.prompt_id }}"
         python3 check_prompt_status.py ${{ steps.queue_prompt_unix.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+    
+    - name: Get end time Unix
+      id: end_time_unix
+      shell: bash
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        echo "end_time=$(date +%s)" >> $GITHUB_OUTPUT
 
     ## Windows Steps
-    - name: Get start time (Windows)
-      id: start_time_win
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        $currentTime = Get-Date -UFormat "%s"
-        Write-Output "start_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "Start time: "
-        Write-Output "$currentTime"
-      shell: powershell
-
     - name: Set up Python
       if: ${{ inputs.os == 'windows' }}
       uses: actions/setup-python@v5
@@ -226,6 +223,16 @@ runs:
         Write-Output "Script output: "
         Write-Output "$PROMPT_ID"
 
+    - name: Get start time (Windows)
+      id: start_time_win
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        $currentTime = Get-Date -UFormat "%s"
+        Write-Output "start_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "Start time: "
+        Write-Output "$currentTime"
+      shell: powershell
+
     - name: Check Prompt Status and Get Output Files (Windows)
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
@@ -234,6 +241,16 @@ runs:
         Write-Output "Prompt ID: ${{ steps.queue_prompt_win.outputs.prompt_id }}"
         python check_prompt_status.py ${{ steps.queue_prompt_win.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
+
+    - name: Get end time (Windows)
+      id: end_time_win
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        $currentTime = Get-Date -UFormat "%s"
+        Write-Output "end_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "End time: "
+        Write-Output "$currentTime"
+      shell: powershell
         
      # - name: Run Python application with prompts
     #   if: ${{ inputs.os == 'windows' }}
@@ -292,10 +309,10 @@ runs:
           "commit_hash": "${{ github.sha }}",
           "branch_name": "${{ github.ref_name }}",
           "bucket_name": "${{ inputs.gcs_bucket_name }}",
-          "workflow_name": "${{ inputs.workflow_name }}"
+          "workflow_name": "${{ inputs.workflow_name }}",
+          "start_time": "${{ steps.start_time_unix.outputs.start_time }}",
+          "end_time": "${{ steps.end_time_unix.outputs.end_time }}"
         }'
-    ## Add this back above when we support start time field
-    ## "start_time": "${{ steps.start_time_unix.outputs.start_time }}"
 
     - name: Call API to upload artifact details
       if: ${{ inputs.os == 'windows' && success() }}
@@ -313,11 +330,10 @@ runs:
             "commit_hash" = "${{ github.sha }}"
             "branch_name" = "${{ github.ref_name }}"
             "bucket_name" = "${{ inputs.gcs_bucket_name }}"
-            "workflow_name" = "${{ inputs.workflow_name }}"
+            "workflow_name" = "${{ inputs.workflow_name }}",
+            "start_time" = "${{ steps.start_time_win.outputs.start_time }}",
+            "end_time" = "${{ steps.end_time_win.outputs.end_time }}"
           } | ConvertTo-Json)
-    ## Add this back above when we support start time field
-    ## "start_time" = "${{ steps.start_time_win.outputs.start_time }}"
-
 
     ## Mac/Linux Cleanup Steps
     - name: Cleanup
