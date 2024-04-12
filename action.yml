@@ -42,10 +42,10 @@ runs:
     ## Mac/Linux Steps
     - name: Get start time Unix
       id: start_time_unix
-      shell: base -el {0}
+      shell: bash
       if: ${{ inputs.os != 'windows' }}
       run: |
-        echo "start_time=$(date +%s) >> $GITHUB_OUTPUT
+        echo "start_time=$(date +%s)" >> $GITHUB_OUTPUT
 
     - uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os != 'windows' }}
