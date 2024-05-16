@@ -307,6 +307,8 @@ runs:
           "cuda_version": "${{ inputs.cuda_version }}",
           "output_files_gcs_paths": "${{ steps.upload-output-files.outputs.uploaded }}",
           "commit_hash": "${{ github.sha }}",
+          "commit_time": "${{ github.event.head_commit.timestamp }}",
+          "commit_title": "${{ github.event.head_commit.message }}",
           "branch_name": "${{ github.ref_name }}",
           "bucket_name": "${{ inputs.gcs_bucket_name }}",
           "workflow_name": "${{ inputs.workflow_name }}",
@@ -328,6 +330,8 @@ runs:
             "cuda_version" = "${{ inputs.cuda_version }}"
             "output_files_gcs_paths" = "${{ steps.upload-output-files.outputs.uploaded }}"
             "commit_hash" = "${{ github.sha }}"
+            "commit_time" = "${{ github.event.head_commit.timestamp }}"
+            "commit_title" = "${{ github.event.head_commit.message }}"
             "branch_name" = "${{ github.ref_name }}"
             "bucket_name" = "${{ inputs.gcs_bucket_name }}"
             "workflow_name" = "${{ inputs.workflow_name }}"
