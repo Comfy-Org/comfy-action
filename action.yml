@@ -85,12 +85,12 @@ runs:
         cp "${HOME}/v1-5-pruned-emaonly.ckpt" "${{ github.workspace }}/models/checkpoints/"
         cp "${HOME}/epiNoiseoffset_v2.safetensors" "${{ github.workspace }}/models/loras/"
 
-    # - name: Install dependencies
-    #   if: ${{ inputs.os != 'windows' }}
-    #   shell: bash -el {0}
-    #   run: |
-    #     which pip3
-    #     pip3 install -r requirements.txt
+    - name: Install dependencies
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        which pip3
+        pip3 install -r requirements.txt
 
     - name: Run Python application
       if: ${{ inputs.os != 'windows' }}
@@ -171,20 +171,12 @@ runs:
 
     # Keep in mind the self runner must be setup with a model in
     # C:\actions-runner\
-    # - name: Download models
-    #   if: ${{ inputs.os == 'windows' }}
-    #   run: |
-    #     cd $Env:GITHUB_ACTION_PATH
-    #     ls "$Env:GITHUB_WORKSPACE"
-    #     pip install -r requirements.txt
-    #     cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
-    #   shell: powershell
-
     - name: Download models
       if: ${{ inputs.os == 'windows' }}
       run: |
         cd $Env:GITHUB_ACTION_PATH
         ls "$Env:GITHUB_WORKSPACE"
+        pip install -r requirements.txt
         cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
       shell: powershell
 
@@ -195,12 +187,6 @@ runs:
     #     Get-Command pip
     #     pip install -r requirements.txt
 
-    - name: "Check conda environment on Windows"
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        conda info
-        conda list
-      shell: powershell
 
     - name: Run Python application quick test
       if: ${{ inputs.os == 'windows' }}
