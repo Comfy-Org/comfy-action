@@ -34,10 +34,11 @@ inputs:
 runs:
   using: "composite"
   steps:
-    ## Common Starting Steps
-    - name: Checkout Comfy repository
+    - name: Checkout last commit
       uses: actions/checkout@v4
-
+      with:
+        fetch-depth: 2
+      - run: git checkout HEAD^
 
     ## Mac/Linux Steps
     - uses: conda-incubator/setup-miniconda@v3.0.3
@@ -321,18 +322,29 @@ runs:
       run: |
         TIMESTAMP=$(git show -s --format=%cI HEAD)
         MESSAGE=$(git show -s --format=%s HEAD)
+        COMMIT_HASH=$(git rev-parse HEAD)
+        echo "Commit time: $TIMESTAMP"
+        echo "Commit title: $MESSAGE"
+        echo "Commit hash: $COMMIT_HASH"
         echo "commit_time=$TIMESTAMP" >> $GITHUB_OUTPUT
         echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
+        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
-    - name: Get Commit Details (Windows)
-      id: get_commit_details_win
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        $timestamp = git show -s --format=%cI HEAD
-        $message = git show -s --format=%s HEAD
-        Write-Output "commit_time=$timestamp" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+      - name: Get Commit Details (Windows)
+        id: get_commit_details_win
+        if: ${{ inputs.os == 'windows' }}
+        shell: powershell
+        run: |
+          $timestamp = git show -s --format=%cI HEAD
+          $message = git show -s --format=%s HEAD
+          $commit_hash = git rev-parse HEAD
+          Write-Output "Commit time: $timestamp"
+          Write-Output "Commit title: $message"
+          Write-Output "Commit hash: $commit_hash"
+          Write-Output "commit_time=$timestamp" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+          Write-Output "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+          Write-Output "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+
 
     - name: Call API to upload artifact details (Mac/Linux)
       if: ${{ inputs.os != 'windows' && success() }}
@@ -346,7 +358,7 @@ runs:
           "os": "${{ inputs.os }}",
           "cuda_version": "${{ inputs.cuda_version }}",
           "output_files_gcs_paths": "${{ steps.upload-output-files.outputs.uploaded }}",
-          "commit_hash": "${{ github.sha }}",
+          "commit_hash": "${{ steps.get_commit_details_unix.outputs.commit_hash }}",
           "commit_time": "${{ steps.get_commit_details_unix.outputs.commit_time }}",
           "commit_title": "${{ steps.get_commit_details_unix.outputs.commit_title }}",
           "branch_name": "${{ github.ref_name }}",
@@ -369,7 +381,7 @@ runs:
             "os" = "${{ inputs.os }}"
             "cuda_version" = "${{ inputs.cuda_version }}"
             "output_files_gcs_paths" = "${{ steps.upload-output-files.outputs.uploaded }}"
-            "commit_hash" = "${{ github.sha }}"
+            "commit_hash" = "${{ steps.get_commit_details_win.outputs.commit_hash }}"
             "commit_time" = "${{ steps.get_commit_details_win.outputs.commit_time }}"
             "commit_title" = "${{ steps.get_commit_details_win.outputs.commit_title }}"
             "branch_name" = "${{ github.ref_name }}"
