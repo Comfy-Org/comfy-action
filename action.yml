@@ -39,15 +39,9 @@ runs:
       with:
         fetch-depth: 2
       if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: git checkout HEAD^
-
-    - name: Checkout last commit windows
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
+    
+    - name: "Checkout last commit"
+      shell: ${{ inputs.os == 'windows' && 'powershell' || 'bash' }}
       run: git checkout HEAD^
 
     ## Mac/Linux Steps
