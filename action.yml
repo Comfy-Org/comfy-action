@@ -22,7 +22,7 @@ inputs:
     description: "Timeout for the workflow (in seconds)"
     required: false
     default: "600"
-  google_credentials: 
+  google_credentials:
     description: "Service Account JSON for uploading to GCS. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
     required: false
   gcs_bucket_name:
@@ -38,7 +38,7 @@ runs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 2
-    
+
     - name: "Checkout last commit"
       shell: ${{ inputs.os == 'windows' && 'powershell' || 'bash' }}
       run: git checkout HEAD^
@@ -136,7 +136,7 @@ runs:
         cd ${{ github.action_path }}
         echo "Prompt ID: ${{ steps.queue_prompt_unix.outputs.prompt_id }}"
         python3 check_prompt_status.py ${{ steps.queue_prompt_unix.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
-    
+
     - name: Get end time Unix
       id: end_time_unix
       shell: bash
@@ -151,7 +151,7 @@ runs:
       with:
         update-environment: false
         python-version: 3.11
-      
+
     - uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os == 'windows' }}
       with:
@@ -203,7 +203,7 @@ runs:
       shell: powershell
       run: |
         python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
-  
+
     - name: Run Python application with prompts
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
@@ -213,7 +213,6 @@ runs:
         Write-Output $envGithubWorkspace
         Write-Output "##############################"
         Start-Process powershell -ArgumentList "-File", "${{ github.action_path }}\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`""
-
 
     - name: Check if the server is running (Windows)
       if: ${{ inputs.os == 'windows' }}
@@ -253,7 +252,6 @@ runs:
         Write-Output "Prompt ID: ${{ steps.queue_prompt_win.outputs.prompt_id }}"
         python check_prompt_status.py ${{ steps.queue_prompt_win.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
-
     - name: Get end time (Windows)
       id: end_time_win
       if: ${{ inputs.os == 'windows' }}
@@ -263,8 +261,8 @@ runs:
         Write-Output "End time: "
         Write-Output "$currentTime"
       shell: powershell
-        
-     # - name: Run Python application with prompts
+
+      # - name: Run Python application with prompts
     #   if: ${{ inputs.os == 'windows' }}
     #   shell: powershell
     #   run: |
@@ -285,9 +283,9 @@ runs:
     #   shell: powershell
 
     ## Common Ending Steps
-    - uses: 'google-github-actions/auth@v2'
+    - uses: "google-github-actions/auth@v2"
       with:
-        credentials_json: '${{ inputs.google_credentials }}'
+        credentials_json: "${{ inputs.google_credentials }}"
 
     - name: Upload Output Files to GCS
       if: ${{ success() }}
@@ -311,7 +309,7 @@ runs:
       shell: powershell
       run: |
         Write-Output "Event : ${{ github.event }}"
-    
+
     - name: Debug print out commit timestamp and commit message
       if: ${{ inputs.os != 'windows' }}
       shell: bash
@@ -333,21 +331,20 @@ runs:
         echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
         echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
-      - name: Get Commit Details (Windows)
-        id: get_commit_details_win
-        if: ${{ inputs.os == 'windows' }}
-        shell: powershell
-        run: |
-          $timestamp = git show -s --format=%cI HEAD
-          $message = git show -s --format=%s HEAD
-          $commit_hash = git rev-parse HEAD
-          Write-Output "Commit time: $timestamp"
-          Write-Output "Commit title: $message"
-          Write-Output "Commit hash: $commit_hash"
-          Write-Output "commit_time=$timestamp" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-          Write-Output "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-          Write-Output "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-
+    - name: Get Commit Details (Windows)
+      id: get_commit_details_win
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        $timestamp = git show -s --format=%cI HEAD
+        $message = git show -s --format=%s HEAD
+        $commit_hash = git rev-parse HEAD
+        Write-Output "Commit time: $timestamp"
+        Write-Output "Commit title: $message"
+        Write-Output "Commit hash: $commit_hash"
+        Write-Output "commit_time=$timestamp" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
 
     - name: Call API to upload artifact details (Mac/Linux)
       if: ${{ inputs.os != 'windows' && success() }}
