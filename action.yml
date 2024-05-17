@@ -391,6 +391,19 @@ runs:
             "end_time" = ${{ steps.end_time_win.outputs.end_time }}
           } | ConvertTo-Json)
 
+    - name: Upload Output Files
+      uses: actions/upload-artifact@v4
+      with:
+        name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
+        path: ${{ github.workspace }}/output/**
+
+    - name: Upload log file
+      uses: actions/upload-artifact@v4
+      if: ${{ success() || failure() }}
+      with:
+        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
+        path: ${{ github.workspace }}/application.log
+
     ## Mac/Linux Cleanup Steps
     - name: Cleanup
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
