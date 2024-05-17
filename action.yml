@@ -38,7 +38,7 @@ runs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 2
-      - run: git checkout HEAD^
+    - run: git checkout HEAD^
 
     ## Mac/Linux Steps
     - uses: conda-incubator/setup-miniconda@v3.0.3
