@@ -306,15 +306,13 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        Write-Output "Commit timestamp: ${{ github.event.head_commit.timestamp }}"
-        Write-Output "Commit message: ${{ github.event.head_commit.message }}"
+        Write-Output "Event : ${{ github.event }}"
     
     - name: Debug print out commit timestamp and commit message
       if: ${{ inputs.os != 'windows' }}
       shell: bash
       run: |
-        echo "Commit timestamp: ${{ github.event.head_commit.timestamp }}"
-        echo "Commit message: ${{ github.event.head_commit.message }}"
+        echo "Event: ${{ github.event }}"
 
     - name: Call API to upload artifact details (Mac/Linux)
       if: ${{ inputs.os != 'windows' && success() }}
