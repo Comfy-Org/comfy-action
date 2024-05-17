@@ -314,6 +314,26 @@ runs:
       run: |
         echo "Event: ${{ github.event }}"
 
+    - name: Get Commit Details (Mac/Linux)
+      id: get_commit_details_unix
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash
+      run: |
+        TIMESTAMP=$(git show -s --format=%cI HEAD)
+        MESSAGE=$(git show -s --format=%s HEAD)
+        echo "commit_time=$TIMESTAMP" >> $GITHUB_OUTPUT
+        echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
+
+    - name: Get Commit Details (Windows)
+      id: get_commit_details_win
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        $timestamp = git show -s --format=%cI HEAD
+        $message = git show -s --format=%s HEAD
+        Write-Output "commit_time=$timestamp" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+
     - name: Call API to upload artifact details (Mac/Linux)
       if: ${{ inputs.os != 'windows' && success() }}
       shell: bash
@@ -327,8 +347,8 @@ runs:
           "cuda_version": "${{ inputs.cuda_version }}",
           "output_files_gcs_paths": "${{ steps.upload-output-files.outputs.uploaded }}",
           "commit_hash": "${{ github.sha }}",
-          "commit_time": "${{ github.event.head_commit.timestamp }}",
-          "commit_title": "${{ github.event.head_commit.message }}",
+          "commit_time": "${{ steps.get_commit_details_unix.outputs.commit_time }}",
+          "commit_title": "${{ steps.get_commit_details_unix.outputs.commit_title }}",
           "branch_name": "${{ github.ref_name }}",
           "bucket_name": "${{ inputs.gcs_bucket_name }}",
           "workflow_name": "${{ inputs.workflow_name }}",
@@ -350,8 +370,8 @@ runs:
             "cuda_version" = "${{ inputs.cuda_version }}"
             "output_files_gcs_paths" = "${{ steps.upload-output-files.outputs.uploaded }}"
             "commit_hash" = "${{ github.sha }}"
-            "commit_time" = "${{ github.event.head_commit.timestamp }}"
-            "commit_title" = "${{ github.event.head_commit.message }}"
+            "commit_time" = "${{ steps.get_commit_details_win.outputs.commit_time }}"
+            "commit_title" = "${{ steps.get_commit_details_win.outputs.commit_title }}"
             "branch_name" = "${{ github.ref_name }}"
             "bucket_name" = "${{ inputs.gcs_bucket_name }}"
             "workflow_name" = "${{ inputs.workflow_name }}"
