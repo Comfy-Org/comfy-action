@@ -34,7 +34,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout last commit unix
+    - name: Checkout last commit
       uses: actions/checkout@v4
       with:
         fetch-depth: 2
