@@ -296,6 +296,7 @@ runs:
 
     - name: Debug print out commit timestamp and commit message
       if: ${{ inputs.os == 'windows' }}
+      shell: powershell
       run: |
         Write-Output "Commit timestamp: ${{ github.event.head_commit.timestamp }}"
         Write-Output "Commit message: ${{ github.event.head_commit.message }}"
