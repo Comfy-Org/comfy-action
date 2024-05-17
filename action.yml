@@ -48,17 +48,17 @@ runs:
         activate-environment: comfyui
         auto-activate-base: false
 
-    - name: Install Pytorch nightly for macOS.
-      if: ${{ inputs.os == 'macos' }}
-      shell: bash -el {0}
-      run: |
-        conda install pytorch torchvision torchaudio -c pytorch-nightly
+    # - name: Install Pytorch nightly for macOS.
+    #   if: ${{ inputs.os == 'macos' }}
+    #   shell: bash -el {0}
+    #   run: |
+    #     conda install pytorch torchvision torchaudio -c pytorch-nightly
 
-    - name: Install Pytorch for compatible CUDA version for Linux.
-      if: ${{ inputs.os == 'linux' }}
-      shell: bash -el {0}
-      run: |
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
+    # - name: Install Pytorch for compatible CUDA version for Linux.
+    #   if: ${{ inputs.os == 'linux' }}
+    #   shell: bash -el {0}
+    #   run: |
+    #     conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
 
     - name: "Check conda environment on Mac/Linux"
       if: ${{ inputs.os != 'windows' }}
@@ -67,22 +67,30 @@ runs:
         conda list
       shell: bash -el {0}
 
-    - name: Download models
+    # - name: Download models
+    #   if: ${{ inputs.os != 'windows' }}
+    #   run: |
+    #     cd ${{ github.action_path }}
+    #     ls "${{ github.workspace }}"
+    #     pip3 install -r requirements.txt
+    #     python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+    #     ls -R "${{ github.workspace }}/models/"
+    #   shell: bash -el {0}
+
+    - name: Copy model
       if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
-        ls "${{ github.workspace }}"
-        pip3 install -r requirements.txt
-        python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
-        ls -R "${{ github.workspace }}/models/"
-      shell: bash -el {0}
+        cp "${HOME}/v1-5-pruned-emaonly.ckpt" "${{ github.workspace }}/models/checkpoints/"
+        cp "${HOME}/epiNoiseoffset_v2.safetensors" "${{ github.workspace }}/models/loras/"
 
-    - name: Install dependencies
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        which pip3
-        pip3 install -r requirements.txt
+    # - name: Install dependencies
+    #   if: ${{ inputs.os != 'windows' }}
+    #   shell: bash -el {0}
+    #   run: |
+    #     which pip3
+    #     pip3 install -r requirements.txt
 
     - name: Run Python application
       if: ${{ inputs.os != 'windows' }}
@@ -148,11 +156,11 @@ runs:
         activate-environment: comfyui
       continue-on-error: true
 
-    - name: Install Pytorch for compatible CUDA version for Windows.
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia --yes
+    # - name: Install Pytorch for compatible CUDA version for Windows.
+    #   if: ${{ inputs.os == 'windows' }}
+    #   shell: powershell
+    #   run: |
+    #     conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia --yes
 
     - name: "Check conda environment on Windows"
       if: ${{ inputs.os == 'windows' }}
@@ -163,21 +171,29 @@ runs:
 
     # Keep in mind the self runner must be setup with a model in
     # C:\actions-runner\
+    # - name: Download models
+    #   if: ${{ inputs.os == 'windows' }}
+    #   run: |
+    #     cd $Env:GITHUB_ACTION_PATH
+    #     ls "$Env:GITHUB_WORKSPACE"
+    #     pip install -r requirements.txt
+    #     cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
+    #   shell: powershell
+
     - name: Download models
       if: ${{ inputs.os == 'windows' }}
       run: |
         cd $Env:GITHUB_ACTION_PATH
         ls "$Env:GITHUB_WORKSPACE"
-        pip install -r requirements.txt
         cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
       shell: powershell
 
-    - name: Install dependencies
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        Get-Command pip
-        pip install -r requirements.txt
+    # - name: Install dependencies
+    #   if: ${{ inputs.os == 'windows' }}
+    #   shell: powershell
+    #   run: |
+    #     Get-Command pip
+    #     pip install -r requirements.txt
 
     - name: "Check conda environment on Windows"
       if: ${{ inputs.os == 'windows' }}
