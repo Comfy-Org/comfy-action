@@ -356,7 +356,7 @@ runs:
           "output_files_gcs_paths": "${{ steps.upload-output-files.outputs.uploaded }}",
           "commit_hash": "${{ steps.get_commit_details_unix.outputs.commit_hash }}",
           "commit_time": "${{ steps.get_commit_details_unix.outputs.commit_time }}",
-          "commit_title": "${{ steps.get_commit_details_unix.outputs.commit_title }}",
+          "commit_message": "${{ steps.get_commit_details_unix.outputs.commit_title }}",
           "branch_name": "${{ github.ref_name }}",
           "bucket_name": "${{ inputs.gcs_bucket_name }}",
           "workflow_name": "${{ inputs.workflow_name }}",
@@ -379,7 +379,7 @@ runs:
             "output_files_gcs_paths" = "${{ steps.upload-output-files.outputs.uploaded }}"
             "commit_hash" = "${{ steps.get_commit_details_win.outputs.commit_hash }}"
             "commit_time" = "${{ steps.get_commit_details_win.outputs.commit_time }}"
-            "commit_title" = "${{ steps.get_commit_details_win.outputs.commit_title }}"
+            "commit_message" = "${{ steps.get_commit_details_win.outputs.commit_title }}"
             "branch_name" = "${{ github.ref_name }}"
             "bucket_name" = "${{ inputs.gcs_bucket_name }}"
             "workflow_name" = "${{ inputs.workflow_name }}"
