@@ -34,11 +34,21 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout last commit
+    - name: Checkout last commit unix
       uses: actions/checkout@v4
       with:
         fetch-depth: 2
-    - run: git checkout HEAD^
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: git checkout HEAD^
+
+    - name: Checkout last commit windows
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: git checkout HEAD^
 
     ## Mac/Linux Steps
     - uses: conda-incubator/setup-miniconda@v3.0.3
