@@ -34,14 +34,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout last commit
+    - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 2
-
-    - name: "Checkout last commit"
-      shell: ${{ inputs.os == 'windows' && 'powershell' || 'bash' }}
-      run: git checkout HEAD^
 
     ## Mac/Linux Steps
     - uses: conda-incubator/setup-miniconda@v3.0.3
@@ -321,9 +317,9 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash
       run: |
-        TIMESTAMP=$(git show -s --format=%cI HEAD)
-        MESSAGE=$(git show -s --format=%s HEAD)
-        COMMIT_HASH=$(git rev-parse HEAD)
+        TIMESTAMP=$(git show -s --format=%cI HEAD^)
+        MESSAGE=$(git show -s --format=%s HEAD^)
+        COMMIT_HASH=$(git rev-parse HEAD^)
         echo "Commit time: $TIMESTAMP"
         echo "Commit title: $MESSAGE"
         echo "Commit hash: $COMMIT_HASH"
@@ -336,9 +332,9 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        $timestamp = git show -s --format=%cI HEAD
-        $message = git show -s --format=%s HEAD
-        $commit_hash = git rev-parse HEAD
+        $timestamp = git show -s --format=%cI HEAD^
+        $message = git show -s --format=%s HEAD^
+        $commit_hash = git rev-parse HEAD^
         Write-Output "Commit time: $timestamp"
         Write-Output "Commit title: $message"
         Write-Output "Commit hash: $commit_hash"
