@@ -342,27 +342,55 @@ runs:
         Write-Output "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
         Write-Output "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
 
+    - name: Install jq
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        if [ "${{ matrix.os }}" == "macos" ]; then
+          brew install jq
+        else
+          sudo apt-get update
+          sudo apt-get install -y jq
+        fi
+
     - name: Call API to upload artifact details (Mac/Linux)
       if: ${{ inputs.os != 'windows' && success() }}
       shell: bash
       run: |
+        payload=$(jq -n \
+          --arg repo "${{ github.repository }}" \
+          --arg run_id "${{ github.run_id }}" \
+          --arg os "${{ inputs.os }}" \
+          --arg cuda_version "${{ inputs.cuda_version }}" \
+          --arg output_files_gcs_paths "${{ steps.upload-output-files.outputs.uploaded }}" \
+          --arg commit_hash "${{ steps.get_commit_details_unix.outputs.commit_hash }}" \
+          --arg commit_time "${{ steps.get_commit_details_unix.outputs.commit_time }}" \
+          --arg commit_message "${{ steps.get_commit_details_unix.outputs.commit_title }}" \
+          --arg branch_name "${{ github.ref_name }}" \
+          --arg bucket_name "${{ inputs.gcs_bucket_name }}" \
+          --arg workflow_name "${{ inputs.workflow_name }}" \
+          --argjson start_time "${{ steps.start_time_unix.outputs.start_time }}" \
+          --argjson end_time "${{ steps.end_time_unix.outputs.end_time }}" \
+          '{
+            repo: $repo,
+            run_id: $run_id,
+            os: $os,
+            cuda_version: $cuda_version,
+            output_files_gcs_paths: $output_files_gcs_paths,
+            commit_hash: $commit_hash,
+            commit_time: $commit_time,
+            commit_message: $commit_message,
+            branch_name: $branch_name,
+            bucket_name: $bucket_name,
+            workflow_name: $workflow_name,
+            start_time: $start_time,
+            end_time: $end_time
+          }')
+        
+        echo "$payload"
+
         curl -X POST "https://api-frontend-dev-qod3oz2v2q-uc.a.run.app/upload-artifact" \
-        -H "Content-Type: application/json" \
-        -d '{
-          "repo": "${{ github.repository }}",
-          "run_id": "${{ github.run_id }}",
-          "os": "${{ inputs.os }}",
-          "cuda_version": "${{ inputs.cuda_version }}",
-          "output_files_gcs_paths": "${{ steps.upload-output-files.outputs.uploaded }}",
-          "commit_hash": "${{ steps.get_commit_details_unix.outputs.commit_hash }}",
-          "commit_time": "${{ steps.get_commit_details_unix.outputs.commit_time }}",
-          "commit_message": "${{ steps.get_commit_details_unix.outputs.commit_title }}",
-          "branch_name": "${{ github.ref_name }}",
-          "bucket_name": "${{ inputs.gcs_bucket_name }}",
-          "workflow_name": "${{ inputs.workflow_name }}",
-          "start_time": ${{ steps.start_time_unix.outputs.start_time }},
-          "end_time": ${{ steps.end_time_unix.outputs.end_time }}
-        }'
+          -H "Content-Type: application/json" \
+          -d "$payload"
 
     - name: Call API to upload artifact details
       if: ${{ inputs.os == 'windows' && success() }}
