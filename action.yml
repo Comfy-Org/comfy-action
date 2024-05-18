@@ -344,6 +344,7 @@ runs:
 
     - name: Install jq
       if: ${{ inputs.os != 'windows' }}
+      shell: bash
       run: |
         if [ "${{ matrix.os }}" == "macos" ]; then
           brew install jq
