@@ -343,15 +343,7 @@ runs:
         Write-Output "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
 
     - name: Install jq
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash
-      run: |
-        if [ "${{ matrix.os }}" == "macos" ]; then
-          brew install jq
-        else
-          sudo apt-get update
-          sudo apt-get install -y jq
-        fi
+      uses: dcarbone/install-jq-action@v2.1.0
 
     - name: Call API to upload artifact details (Mac/Linux)
       if: ${{ inputs.os != 'windows' && success() }}
