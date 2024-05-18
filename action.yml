@@ -400,15 +400,15 @@ runs:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
 
-    - name: Sleep for 10 minutes on failure
-      if: ${{ inputs.os != 'windows' && failure() }}
-      shell: "bash"
-      run: sleep 600
+    # - name: Sleep for 10 minutes on failure
+    #   if: ${{ inputs.os != 'windows' && failure() }}
+    #   shell: "bash"
+    #   run: sleep 600
 
-    - name: Sleep for 10 minutes on failure
-      if: ${{ inputs.os == 'windows' && failure() }}
-      shell: powershell
-      run: Start-Sleep -Seconds 600
+    # - name: Sleep for 10 minutes on failure
+    #   if: ${{ inputs.os == 'windows' && failure() }}
+    #   shell: powershell
+    #   run: Start-Sleep -Seconds 600
 
     ## Mac/Linux Cleanup Steps
     - name: Cleanup
