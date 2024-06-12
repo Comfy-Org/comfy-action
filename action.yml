@@ -115,7 +115,7 @@ runs:
       run: |
         cd ${{ github.action_path }}
         ls "${{ github.workspace }}"
-        python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+        # python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
         cp "${HOME}/v1-5-pruned-emaonly.ckpt" "${{ github.workspace }}/models/checkpoints/"
         cp "${HOME}/epiNoiseoffset_v2.safetensors" "${{ github.workspace }}/models/loras/"
 
@@ -341,7 +341,6 @@ runs:
       run: |
         cd $Env:GITHUB_ACTION_PATH
         ls "$Env:GITHUB_WORKSPACE"
-        pip install -r requirements.txt
         cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
       shell: powershell
 
