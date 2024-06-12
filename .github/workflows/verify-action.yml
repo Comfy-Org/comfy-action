@@ -25,3 +25,7 @@ jobs:
     - name: Lint GitHub Actions workflows
       run: |
         actionlint
+
+    - name: Run action_yaml_checker.py
+      run: python action_yaml_checker.py
+

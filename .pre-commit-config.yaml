@@ -1,0 +1,10 @@
+
+repos:
+- repo: local
+  hooks:
+  - id: action-yaml-checker
+    name: Action YAML Checker
+    entry: python action_yaml_checker.py action.yml
+    language: python
+    pass_filenames: false
+    additional_dependencies: [pyyaml, tabulate]  # Add this line to specify the dependency

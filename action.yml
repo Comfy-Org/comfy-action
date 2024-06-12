@@ -31,16 +31,49 @@ inputs:
   output_prefix:
     description: "Prefix for the output files. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
     required: false
+  api_endpoint:
+    description: "Comfy Org API endpoint"
+    required: true
 runs:
   using: "composite"
   steps:
-    - name: Checkout
+    - name: '[Universal] Checkout'
       uses: actions/checkout@v4
       with:
         fetch-depth: 2
 
-    ## Mac/Linux Steps
-    - uses: conda-incubator/setup-miniconda@v3.0.3
+    ############################################################
+    ##                      Mac/Linux Steps                   ##
+    ##           ______________                               ##
+    ##          /             /|              _nnnn_          ##
+    ##         /             / |             dGGGGMMb         ##
+    ##        /____________ /  |            @p~qp~~qMb        ##
+    ##       | ___________ |   |            M|@||@) M|        ##
+    ##       ||           ||   |            @,----.JM|        ##
+    ##       ||           ||   |           JS^\__/  qKL       ##
+    ##       ||           ||   |          dZP        qKRb     ##
+    ##       ||___________||   |         dZP          qKKb    ##
+    ##       |   _______   |  /         fZP            SMMb   ##
+    ##      /|  (_______)  | /          HZM            MMMM   ##
+    ##     ( |_____________|/           FqM            MMMM   ##
+    ##      \                         __| ".        |\dS"qML  ##
+    ##  .=======================.     |    `.       | `' \Zq  ##
+    ##  | ::::::::::::::::  ::: |    _)      \.___.,|     .'  ##
+    ##  | ::::::::::::::[]  ::: |    \____   )MMMMMP|   .'    ##
+    ##  |   -----------     ::: |         `-'       `--'      ##
+    ##  `-----------------------'                             ##
+    ############################################################
+
+    - name: '[Unix] Set up Python'
+      if: ${{ inputs.os != 'windows' }}
+      uses: actions/setup-python@v5
+      with:
+        update-environment: false
+        python-version: 3.11
+
+
+    - name: '[Unix] Setup Conda'
+      uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os != 'windows' }}
       with:
         auto-update-conda: true
@@ -48,19 +81,19 @@ runs:
         activate-environment: comfyui
         auto-activate-base: false
 
-    - name: Install Pytorch nightly for macOS.
+    - name: '[Unix-Mac-Only] Install Pytorch nightly'
       if: ${{ inputs.os == 'macos' }}
       shell: bash -el {0}
       run: |
         conda install pytorch torchvision torchaudio -c pytorch-nightly
 
-    - name: Install Pytorch for compatible CUDA version for Linux.
+    - name: '[Unix-Liux-Only] Install Pytorch'
       if: ${{ inputs.os == 'linux' }}
       shell: bash -el {0}
       run: |
         conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
 
-    - name: "Check conda environment on Mac/Linux"
+    - name: '[Unix] Check conda environment'
       if: ${{ inputs.os != 'windows' }}
       run: |
         conda info
@@ -77,36 +110,43 @@ runs:
     #     ls -R "${{ github.workspace }}/models/"
     #   shell: bash -el {0}
 
-    - name: Copy model
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        cd ${{ github.action_path }}
-        cp "${HOME}/v1-5-pruned-emaonly.ckpt" "${{ github.workspace }}/models/checkpoints/"
-        cp "${HOME}/epiNoiseoffset_v2.safetensors" "${{ github.workspace }}/models/loras/"
-
-    - name: Install dependencies
+    - name: '[Unix] Install dependencies'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
         which pip3
         pip3 install -r requirements.txt
 
-    - name: Run Python application
+    - name: '[Unix] Download model'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        cd ${{ github.action_path }}
+        ls "${{ github.workspace }}"
+        python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+        cp "${HOME}/v1-5-pruned-emaonly.ckpt" "${{ github.workspace }}/models/checkpoints/"
+        cp "${HOME}/epiNoiseoffset_v2.safetensors" "${{ github.workspace }}/models/loras/"
+
+    - name: '[Unix] Run Python application quick test'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        python main.py --quick-test-for-ci
+
+    - name: '[Unix] Run Python application'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
         python3 main.py --force-fp16 > application.log 2>&1 &
 
-    - name: Check if the server is running
+    - name: '[Unix] Check if the server is running'
       if: ${{ inputs.os != 'windows' }}
       run: |
         cd ${{ github.action_path }}
-        python3 poll_server_start.py
+        python3 poll_server_start.py > application.log 2>&1
       shell: bash -el {0}
 
-    - name: Queue Prompt
-      id: queue_prompt_unix
+    - name: '[Unix] Queue Prompts'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
@@ -118,14 +158,14 @@ runs:
         echo "Script output: "
         echo "$PROMPT_ID"
 
-    - name: Get start time Unix
-      id: start_time_unix
+    - name: '[Unix] Get start time'
+      id: unix_start_time
       shell: bash
       if: ${{ inputs.os != 'windows' }}
       run: |
         echo "start_time=$(date +%s)" >> $GITHUB_OUTPUT
 
-    - name: Check Prompt Status and Get Output Files
+    - name: '[Unix] Check Prompt Status and Get Output Files'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
@@ -133,187 +173,45 @@ runs:
         echo "Prompt ID: ${{ steps.queue_prompt_unix.outputs.prompt_id }}"
         python3 check_prompt_status.py ${{ steps.queue_prompt_unix.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
-    - name: Get end time Unix
-      id: end_time_unix
+    - name: '[Unix] Get end time Unix'
+      id: unix_end_time
       shell: bash
       if: ${{ inputs.os != 'windows' }}
       run: |
         echo "end_time=$(date +%s)" >> $GITHUB_OUTPUT
 
-    ## Windows Steps
-    - name: Set up Python
-      if: ${{ inputs.os == 'windows' }}
-      uses: actions/setup-python@v5
-      with:
-        update-environment: false
-        python-version: 3.11
-
-    - uses: conda-incubator/setup-miniconda@v3.0.3
-      if: ${{ inputs.os == 'windows' }}
-      with:
-        auto-update-conda: true
-        miniconda-version: latest
-        activate-environment: comfyui
-      continue-on-error: true
-
-    - name: Install Pytorch for compatible CUDA version for Windows.
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
+    - name: '[Unix] Auth to GCS'
+      uses: "google-github-actions/auth@v2"
+      if: ${{ inputs.os != 'windows' }}
       run: |
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia --yes
-
-    - name: "Check conda environment on Windows"
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        conda info
-        conda list
-      shell: powershell
-
-    # Keep in mind the self runner must be setup with a model in
-    # C:\actions-runner\
-    - name: Download models
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        cd $Env:GITHUB_ACTION_PATH
-        ls "$Env:GITHUB_WORKSPACE"
-        pip install -r requirements.txt
-        cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
-      shell: powershell
-
-    - name: Install dependencies
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        Get-Command pip
-        pip install -r requirements.txt
-
-    - name: "Check conda environment on Windows"
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        conda info
-        conda list
-      shell: powershell
-
-    - name: Run Python application quick test
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
-
-    - name: Run Python application with prompts
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        $envGithubWorkspace = $Env:GITHUB_WORKSPACE
-        Write-Output "##############################"
-        Write-Output $envGithubWorkspace
-        Write-Output "##############################"
-        Start-Process powershell -ArgumentList "-File", "${{ github.action_path }}\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`""
-
-    - name: Check if the server is running (Windows)
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        cd $Env:GITHUB_ACTION_PATH
-        python poll_server_start.py
-      shell: powershell
-
-    - name: Queue Prompt (Windows)
-      id: queue_prompt_win
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        cd $Env:GITHUB_ACTION_PATH
-        $FULL_PATH="${Env:GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
-        Write-Output "Full path to the JSON file: $FULL_PATH"
-        $PROMPT_ID = python queue_prompt.py "$FULL_PATH"
-        Write-Output "prompt_id=$PROMPT_ID" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "Script output: "
-        Write-Output "$PROMPT_ID"
-
-    - name: Get start time (Windows)
-      id: start_time_win
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        $currentTime = [int][double]::Parse((Get-Date -UFormat "%s"))
-        Write-Output "start_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "Start time: "
-        Write-Output "$currentTime"
-      shell: powershell
-
-    - name: Check Prompt Status and Get Output Files (Windows)
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        cd $Env:GITHUB_ACTION_PATH
-        Write-Output "Prompt ID: ${{ steps.queue_prompt_win.outputs.prompt_id }}"
-        python check_prompt_status.py ${{ steps.queue_prompt_win.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
-
-    - name: Get end time (Windows)
-      id: end_time_win
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        $currentTime = [int][double]::Parse((Get-Date -UFormat "%s"))
-        Write-Output "end_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "End time: "
-        Write-Output "$currentTime"
-      shell: powershell
-
-      # - name: Run Python application with prompts
-    #   if: ${{ inputs.os == 'windows' }}
-    #   shell: powershell
-    #   run: |
-    #     $jsonContent = Get-Content ${{ inputs.workflow_json_path }} -Raw
-    #     $command = ""
-    #     Start-Process powershell -ArgumentList "-NoProfile", "-Command", "conda activate $envName && python $Env:GITHUB_WORKSPACE/main.py --force-fp16"
-    #     Write-Output "##############################"
-    #     Write-Output $jsonContent
-    #     Write-Output "##############################"
-    #     $apiJsonBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($jsonContent))
-    #     python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
-    #     Write-Output python $Env:GITHUB_WORKSPACE/main.py --test-ci-with-prompts --prompts-for-ci-test "$apiJsonBase64"
-
-    # - name: Sleep for debugging windows
-    #   if: ${{ inputs.os == 'windows' && failure() }}
-    #   run: |
-    #     Start-Sleep -Seconds 3600 # Sleeps for 1 hour
-    #   shell: powershell
-
-    ## Common Ending Steps
-    - uses: "google-github-actions/auth@v2"
       with:
         credentials_json: "${{ inputs.google_credentials }}"
 
-    - name: Upload Output Files to GCS
-      if: ${{ success() }}
-      id: upload-output-files
+    - name: '[Unix] Upload Output Files to GCS'
+      if: ${{ success() && inputs.os != 'windows' }}
+      id: unix_upload-output-files
       uses: google-github-actions/upload-cloud-storage@v2
       with:
         path: ${{ github.workspace }}/output
         destination: ${{ inputs.gcs_bucket_name }}/output-files/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
         glob: "${{ inputs.output_prefix }}*"
 
-    - name: Upload log file to GCS
-      if: ${{ success() || failure() }}
-      id: upload-log-files
+    - name: '[Unix] Upload log file to GCS'
+      if: ${{ ( success() || failure() ) && inputs.os != 'windows' }}
+      id: unix_upload-log-files
       uses: google-github-actions/upload-cloud-storage@v2
       with:
         path: ${{ github.workspace }}/application.log
         destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
-
-    - name: Debug print out commit timestamp and commit message
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        Write-Output "Event : ${{ github.event }}"
-
-    - name: Debug print out commit timestamp and commit message
+        
+    - name: '[Unix] Debug print out commit timestamp and commit message'
       if: ${{ inputs.os != 'windows' }}
       shell: bash
       run: |
         echo "Event: ${{ github.event }}"
 
-    - name: Get Commit Details (Mac/Linux)
-      id: get_commit_details_unix
+    - name: '[Unix] Get Commit Details'
+      id: unix_get_commit_details
       if: ${{ inputs.os != 'windows' }}
       shell: bash
       run: |
@@ -327,25 +225,11 @@ runs:
         echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
         echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
-    - name: Get Commit Details (Windows)
-      id: get_commit_details_win
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        $timestamp = git show -s --format=%cI HEAD^
-        $message = git show -s --format=%s HEAD^
-        $commit_hash = git rev-parse HEAD^
-        Write-Output "Commit time: $timestamp"
-        Write-Output "Commit title: $message"
-        Write-Output "Commit hash: $commit_hash"
-        Write-Output "commit_time=$timestamp" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
 
-    - name: Install jq
+    - name: '[Unix-Only] Install jq'
       uses: dcarbone/install-jq-action@v2.1.0
 
-    - name: Call API to upload artifact details (Mac/Linux)
+    - name: '[Unix] Call API to upload artifact details'
       if: ${{ inputs.os != 'windows' && success() }}
       shell: bash
       run: |
@@ -355,14 +239,14 @@ runs:
           --arg os "${{ inputs.os }}" \
           --arg cuda_version "${{ inputs.cuda_version }}" \
           --arg output_files_gcs_paths "${{ steps.upload-output-files.outputs.uploaded }}" \
-          --arg commit_hash "${{ steps.get_commit_details_unix.outputs.commit_hash }}" \
-          --arg commit_time "${{ steps.get_commit_details_unix.outputs.commit_time }}" \
-          --arg commit_message "${{ steps.get_commit_details_unix.outputs.commit_title }}" \
+          --arg commit_hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" \
+          --arg commit_time "${{ steps.unix_get_commit_details.outputs.commit_time }}" \
+          --arg commit_message "${{ steps.unix_get_commit_details.outputs.commit_title }}" \
           --arg branch_name "${{ github.ref_name }}" \
           --arg bucket_name "${{ inputs.gcs_bucket_name }}" \
           --arg workflow_name "${{ inputs.workflow_name }}" \
-          --argjson start_time "${{ steps.start_time_unix.outputs.start_time }}" \
-          --argjson end_time "${{ steps.end_time_unix.outputs.end_time }}" \
+          --argjson start_time "${{ steps.unix_start_time.outputs.start_time }}" \
+          --argjson end_time "${{ steps.unix_end_time.outputs.end_time }}" \
           '{
             repo: $repo,
             run_id: $run_id,
@@ -385,11 +269,211 @@ runs:
           -H "Content-Type: application/json" \
           -d "$payload"
 
-    - name: Call API to upload artifact details
+    - name: '[Unix] Upload Output Files'
+      uses: actions/upload-artifact@v4
+      with:
+        name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
+        path: ${{ github.workspace }}/output/**
+
+    - name: '[Unix] Upload log file'
+      uses: actions/upload-artifact@v4
+      if: ${{ success() || failure() }}
+      with:
+        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
+        path: ${{ github.workspace }}/application.log
+
+    - name: '[Unix] Cleanup Repo'
+      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
+      shell: bash
+      run: rm -rf ${{ github.workspace }}/*
+
+    - name: '[Unix] Cleanup Conda'
+      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
+      shell: bash -el {0}
+      run: conda deactivate && conda env remove --name comfyui && conda clean -all
+
+
+    ##################################################################################### 
+    ##                           Windows Steps (F**k powershell)                       ## 
+    ##                                                                                 ## 
+    ##               _.-;;-._      _                                                   ## 
+    ##        '-..-'|   ||   |    | |                                                  ## 
+    ##        '-..-'|_.-;;-._|    | |===( )   //////                                   ## 
+    ##        '-..-'|   ||   |    |_|   |||  | o o|                                    ## 
+    ##        '-..-'|_.-''-._|           ||| ( c  )                  ____              ## 
+    ##                                    ||| \= /                  ||   \_            ## 
+    ##                                     ||||||                   ||     |           ## 
+    ##                                     ||||||                ...||__/|-"           ## 
+    ##                                     ||||||             __|________|__           ## 
+    ##                                       |||             |______________|          ## 
+    ##                                       |||             || ||      || ||          ## 
+    ##                                       |||             || ||      || ||          ## 
+    ##  -------------------------------------|||-------------||-||------||-||-------   ## 
+    ##                                       |__>            || ||      || ||          ## 
+    ##                                                                                 ## 
+    ##                                                                                 ## 
+    ##################################################################################### 
+   
+    - name: '[Win] Set up Python'
+      if: ${{ inputs.os == 'windows' }}
+      uses: actions/setup-python@v5
+      with:
+        update-environment: false
+        python-version: 3.11
+
+    - name: '[Win] Setup Conda'
+      uses: conda-incubator/setup-miniconda@v3.0.3
+      if: ${{ inputs.os == 'windows' }}
+      with:
+        auto-update-conda: true
+        miniconda-version: latest
+        activate-environment: comfyui
+      continue-on-error: true
+
+    - name: '[Win-Only] Install Pytorch'
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia --yes
+
+    - name: "[Win] Check conda environment"
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        conda info
+        conda list
+      shell: powershell
+
+    - name: '[Win] Install dependencies'
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        Get-Command pip
+        pip install -r requirements.txt
+
+    # Keep in mind the self runner must be setup with a model in C:\actions-runner\
+    - name: '[Win] Download models'
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        ls "$Env:GITHUB_WORKSPACE"
+        pip install -r requirements.txt
+        cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
+      shell: powershell
+
+    - name: '[Win] Run Python application quick test'
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
+
+    - name: '[Win] Run Python application'
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        $envGithubWorkspace = $Env:GITHUB_WORKSPACE
+        Write-Output "##############################"
+        Write-Output $envGithubWorkspace
+        Write-Output "##############################"
+        Start-Process powershell -ArgumentList "-File", "${{ github.action_path }}\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`""
+
+    - name: '[Win] Check if the server is running'
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        python poll_server_start.py
+      shell: powershell
+
+    - name: '[Win] Queue Prompt'
+      id: queue_prompt_win
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        $FULL_PATH="${Env:GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
+        Write-Output "Full path to the JSON file: $FULL_PATH"
+        $PROMPT_ID = python queue_prompt.py "$FULL_PATH"
+        Write-Output "prompt_id=$PROMPT_ID" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "Script output: "
+        Write-Output "$PROMPT_ID"
+
+    - name: '[Win] Get start time'
+      id: win_start_time
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        $currentTime = [int][double]::Parse((Get-Date -UFormat "%s"))
+        Write-Output "start_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "Start time: "
+        Write-Output "$currentTime"
+      shell: powershell
+
+    - name: '[Win] Check Prompt Status and Get Output Files'
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        cd $Env:GITHUB_ACTION_PATH
+        Write-Output "Prompt ID: ${{ steps.queue_prompt_win.outputs.prompt_id }}"
+        python check_prompt_status.py ${{ steps.queue_prompt_win.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+
+    - name: '[Win] Get end time'
+      id: win_end_tim'[Win] e
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+        $currentTime = [int][double]::Parse((Get-Date -UFormat "%s"))
+        Write-Output "end_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "End time: "
+        Write-Output "$currentTime"
+      shell: powershell
+
+    - name: '[Win] Auth to GCS'
+      uses: "google-github-actions/auth@v2"
+      if: ${{ inputs.os == 'windows' }}
+      run: |
+      with:
+        credentials_json: "${{ inputs.google_credentials }}"
+
+    - name: '[Win] Upload Output Files to GCS'
+      if: ${{ success() }}
+      id: win_upload-output-files
+      uses: google-github-actions/upload-cloud-storage@v2
+      with:
+        path: ${{ github.workspace }}/output
+        destination: ${{ inputs.gcs_bucket_name }}/output-files/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+        glob: "${{ inputs.output_prefix }}*"
+
+    - name: '[Win] Upload log file to GCS'
+      if: ${{ success() || failure() }}
+      id: win_upload-log-files
+      uses: google-github-actions/upload-cloud-storage@v2
+      with:
+        path: ${{ github.workspace }}/application.log
+        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+
+    - name: '[Win] Debug print out commit timestamp and commit message'
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        Write-Output "Event : ${{ github.event }}"
+
+    - name: '[Win] Get Commit Details'
+      id: win_get_commit_details
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        $timestamp = git show -s --format=%cI HEAD^
+        $message = git show -s --format=%s HEAD^
+        $commit_hash = git rev-parse HEAD^
+        Write-Output "Commit time: $timestamp"
+        Write-Output "Commit title: $message"
+        Write-Output "Commit hash: $commit_hash"
+        Write-Output "commit_time=$timestamp" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        Write-Output "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+
+    - name: '[Win] Call API to upload artifact details'
       if: ${{ inputs.os == 'windows' && success() }}
       shell: powershell
       run: |
-        Invoke-WebRequest -Uri "https://api-frontend-dev-qod3oz2v2q-uc.a.run.app/upload-artifact" `
+        Invoke-WebRequest -Uri "${{ inputs.api_endpoint}}" `
           -Method POST `
           -Headers @{"Content-Type"="application/json"} `
           -Body (@{
@@ -397,53 +481,32 @@ runs:
             "run_id" = "${{ github.run_id }}"
             "os" = "${{ inputs.os }}"
             "cuda_version" = "${{ inputs.cuda_version }}"
-            "output_files_gcs_paths" = "${{ steps.upload-output-files.outputs.uploaded }}"
-            "commit_hash" = "${{ steps.get_commit_details_win.outputs.commit_hash }}"
-            "commit_time" = "${{ steps.get_commit_details_win.outputs.commit_time }}"
-            "commit_message" = "${{ steps.get_commit_details_win.outputs.commit_title }}"
+            "output_files_gcs_paths" = "${{ steps.win_upload-output-files.outputs.uploaded }}"
+            "commit_hash" = "${{ steps.win_get_commit_details.outputs.commit_hash }}"
+            "commit_time" = "${{ steps.win_get_commit_details.outputs.commit_time }}"
+            "commit_message" = "${{ steps.win_get_commit_details.outputs.commit_title }}"
             "branch_name" = "${{ github.ref_name }}"
             "bucket_name" = "${{ inputs.gcs_bucket_name }}"
             "workflow_name" = "${{ inputs.workflow_name }}"
-            "start_time" = ${{ steps.start_time_win.outputs.start_time }}
-            "end_time" = ${{ steps.end_time_win.outputs.end_time }}
+            "start_time" = ${{ steps.win_start_time.outputs.start_time }}
+            "end_time" = ${{ steps.win_end_time.outputs.end_time }}
           } | ConvertTo-Json)
 
-    - name: Upload Output Files
+    - name: '[Win] Upload Output Files'
       uses: actions/upload-artifact@v4
+      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       with:
         name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/output/**
 
-    - name: Upload log file
+    - name: '[Win] Upload log file'
       uses: actions/upload-artifact@v4
-      if: ${{ success() || failure() }}
+      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
 
-    # - name: Sleep for 10 minutes on failure
-    #   if: ${{ inputs.os != 'windows' && failure() }}
-    #   shell: "bash"
-    #   run: sleep 600
-
-    # - name: Sleep for 10 minutes on failure
-    #   if: ${{ inputs.os == 'windows' && failure() }}
-    #   shell: powershell
-    #   run: Start-Sleep -Seconds 600
-
-    ## Mac/Linux Cleanup Steps
-    - name: Cleanup
-      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
-      shell: bash
-      run: rm -rf ${{ github.workspace }}/*
-
-    - name: Cleanup Conda
-      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
-      shell: bash -el {0}
-      run: conda deactivate && conda env remove --name comfyui && conda clean -all
-
-    ## Windows Cleanup Steps
-    - name: Cleanup output files only
+    - name: '[Win] Cleanup output files only'
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       shell: powershell
       run: Remove-Item -Path "${{ github.workspace }}/output/*" -Recurse -Force
