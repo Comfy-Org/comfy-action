@@ -430,7 +430,7 @@ runs:
         credentials_json: "${{ inputs.google_credentials }}"
 
     - name: '[Win] Upload Output Files to GCS'
-      if: ${{ success() }}
+      if: ${{ success() && inputs.os == 'windows'}}
       id: win_upload-output-files
       uses: google-github-actions/upload-cloud-storage@v2
       with:
@@ -439,7 +439,7 @@ runs:
         glob: "${{ inputs.output_prefix }}*"
 
     - name: '[Win] Upload log file to GCS'
-      if: ${{ success() || failure() }}
+      if: ${{ ( success() || failure() ) && inputs.os == 'windows'}}
       id: win_upload-log-files
       uses: google-github-actions/upload-cloud-storage@v2
       with:
