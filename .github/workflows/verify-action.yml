@@ -34,7 +34,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        pip install requirements-dev.txt
+        pip install -r requirements-dev.txt
         
     - name: Run action_yaml_checker.py
       run: python action_yaml_checker.py
