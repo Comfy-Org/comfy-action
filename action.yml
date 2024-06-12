@@ -183,7 +183,6 @@ runs:
     - name: '[Unix] Auth to GCS'
       uses: "google-github-actions/auth@v2"
       if: ${{ inputs.os != 'windows' }}
-      run: |
       with:
         credentials_json: "${{ inputs.google_credentials }}"
 
@@ -415,7 +414,7 @@ runs:
         python check_prompt_status.py ${{ steps.queue_prompt_win.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
     - name: '[Win] Get end time'
-      id: win_end_tim'[Win] e
+      id: win_end_tim
       if: ${{ inputs.os == 'windows' }}
       run: |
         $currentTime = [int][double]::Parse((Get-Date -UFormat "%s"))
@@ -427,7 +426,6 @@ runs:
     - name: '[Win] Auth to GCS'
       uses: "google-github-actions/auth@v2"
       if: ${{ inputs.os == 'windows' }}
-      run: |
       with:
         credentials_json: "${{ inputs.google_credentials }}"
 
