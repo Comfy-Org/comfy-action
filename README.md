@@ -1,5 +1,7 @@
 # comfy-action
 
+[![Verify GitHub Action YML](https://github.com/Comfy-Org/comfy-action/actions/workflows/verify-action.yml/badge.svg)](https://github.com/Comfy-Org/comfy-action/actions/workflows/verify-action.yml)
+
 Sets up ComfyUI on Github Action Runner and execute a workflow json.
 
 This is meant to be run in the ComfyUI repository.
