@@ -147,6 +147,7 @@ runs:
       shell: bash -el {0}
 
     - name: '[Unix] Queue Prompts'
+      id: unix_queue_prompt
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
@@ -170,8 +171,8 @@ runs:
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
-        echo "Prompt ID: ${{ steps.queue_prompt_unix.outputs.prompt_id }}"
-        python3 check_prompt_status.py ${{ steps.queue_prompt_unix.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+        echo "Prompt ID: ${{ steps.unix_queue_prompt.outputs.prompt_id }}"
+        python3 check_prompt_status.py ${{ steps.unix_queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
     - name: '[Unix] Get end time Unix'
       id: unix_end_time
@@ -383,7 +384,7 @@ runs:
       shell: powershell
 
     - name: '[Win] Queue Prompt'
-      id: queue_prompt_win
+      id: win_queue_prompt
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
@@ -410,8 +411,8 @@ runs:
       shell: powershell
       run: |
         cd $Env:GITHUB_ACTION_PATH
-        Write-Output "Prompt ID: ${{ steps.queue_prompt_win.outputs.prompt_id }}"
-        python check_prompt_status.py ${{ steps.queue_prompt_win.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
+        Write-Output "Prompt ID: ${{ steps.win_queue_prompt.outputs.prompt_id }}"
+        python check_prompt_status.py ${{ steps.win_queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
 
     - name: '[Win] Get end time'
       id: win_end_tim
