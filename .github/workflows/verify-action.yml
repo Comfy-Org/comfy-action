@@ -26,6 +26,15 @@ jobs:
       run: |
         actionlint
 
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    
+    - name: Install dependencies
+      run: |
+        pip install requirements-dev.txt
+        
     - name: Run action_yaml_checker.py
       run: python action_yaml_checker.py
 
