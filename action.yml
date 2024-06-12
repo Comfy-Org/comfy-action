@@ -16,8 +16,10 @@ inputs:
     description: "Name of the workflow to run. This is used to identify the workflow in the logs."
     required: true
   workflow_json_path:
-    description: "Path (relative to the root of the Github repo) of the Workflow JSON to run. Must be API format JSON."
-    required: true
+    description: "Path (relative to the root of the Github repo) of the Workflow
+    JSON to run. Must be API format JSON."
+    required: false
+    default: "workflow.json"
   timeout:
     description: "Timeout for the workflow (in seconds)"
     required: false
@@ -31,6 +33,7 @@ inputs:
   output_prefix:
     description: "Prefix for the output files. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
     required: false
+    default: "ComfyUI"
   api_endpoint:
     description: "Comfy Org API endpoint"
     required: false
