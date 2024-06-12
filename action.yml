@@ -64,14 +64,6 @@ runs:
     ##  `-----------------------'                             ##
     ############################################################
 
-    - name: '[Unix] Set up Python'
-      if: ${{ inputs.os != 'windows' }}
-      uses: actions/setup-python@v5
-      with:
-        update-environment: false
-        python-version: 3.11
-
-
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os != 'windows' }}
@@ -314,13 +306,6 @@ runs:
     ##                                                                                 ## 
     ##################################################################################### 
    
-    - name: '[Win] Set up Python'
-      if: ${{ inputs.os == 'windows' }}
-      uses: actions/setup-python@v5
-      with:
-        update-environment: false
-        python-version: 3.11
-
     - name: '[Win] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os == 'windows' }}
