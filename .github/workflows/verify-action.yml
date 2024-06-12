@@ -3,10 +3,9 @@ name: Verify GitHub Action YML
 on:
   push:
     paths:
-      - '.github/workflows/*.yml'
-  pull_request:
-    paths:
-      - '.github/workflows/*.yml'
+      - 'action.yml'
+      - 'action_yaml_checker.py'
+      - '.github/workflows/verify-action.yml'
   workflow_dispatch: 
 
 jobs:
