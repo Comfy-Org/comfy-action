@@ -258,9 +258,16 @@ runs:
         
         echo "$payload"
 
-        curl -X POST "${{inputs.api_endpoint}}" \
+        response_code=$(curl -o "${{ github.workspace }}/application.log" \
+          -X POST "${{inputs.api_endpoint}}" \
           -H "Content-Type: application/json" \
-          -d "$payload"
+          -d "$payload")
+        if [[ $response_code -ne 200 ]]; then
+          echo "API request failed with status code $response_code and response body"
+          cat "${{ github.workspace }}/application.log"
+          exit 1
+        fi
+                
 
     - name: '[Unix] Upload Output Files'
       uses: actions/upload-artifact@v4
@@ -457,7 +464,7 @@ runs:
       if: ${{ inputs.os == 'windows' && success() }}
       shell: powershell
       run: |
-        Invoke-WebRequest -Uri "${{ inputs.api_endpoint}}" `
+        $response = Invoke-WebRequest -Uri "${{ inputs.api_endpoint}}" `
           -Method POST `
           -Headers @{"Content-Type"="application/json"} `
           -Body (@{
@@ -475,6 +482,11 @@ runs:
             "start_time" = ${{ steps.win_start_time.outputs.start_time }}
             "end_time" = ${{ steps.win_end_time.outputs.end_time }}
           } | ConvertTo-Json)
+
+        if ($response.StatusCode -ne 200) {
+            Write-Error "API request failed with status code $($response.StatusCode)"
+            exit 1
+        }
 
     - name: '[Win] Upload Output Files'
       uses: actions/upload-artifact@v4
