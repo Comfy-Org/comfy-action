@@ -262,6 +262,7 @@ runs:
         echo "$payload"
 
         response_code=$(curl -o "${{ github.workspace }}/application.log" \
+          -s -w "%{http_code}" \
           -X POST "${{inputs.api_endpoint}}" \
           -H "Content-Type: application/json" \
           -d "$payload")
