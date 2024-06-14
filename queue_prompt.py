@@ -1,37 +1,127 @@
-import json
-import requests
 import argparse
+import json
+import subprocess
+import datetime
+
+import requests
+
+from firebase_admin import storage
 
 def read_json_file(file_path):
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         return json.load(file)
 
 def post_json_to_server(json_data, url):
     return requests.post(url, json=json_data)
 
-def main(json_file_path, server_url):
-    # Read JSON file
-    json_contents = read_json_file(json_file_path)
-    # Print the json_contents
-    #print(json.dumps(json_contents, indent=4))
-    # Construct the new JSON object
-    data_to_send = {"prompt": json_contents}
+def get_status(prompt_id, url):
+    response = requests.get(f"{url}/{prompt_id}")
+    if response.status_code == 200:
+        return response.json()
+    return None
 
-    # Post the JSON to the server
-    response = post_json_to_server(data_to_send, server_url)
-    #print("Status Code:" + str(response.status_code))
-    #print("Response:" + response.text)
-    response_json = response.json()
-    if ('prompt_id' not in response_json):
-        print("Error: prompt_id not found in response.")
-        print(response_json)
+def is_completed(status_response, prompt_id):
+    # Check if the expected fields exist in the response
+    return (
+        status_response
+        and prompt_id in status_response
+        and 'status' in status_response[prompt_id]
+        and status_response[prompt_id]['status'].get('completed', False)
+    )
+
+#TODO: add support for different file type
+def upload_img_from_filename(bucket_name: str, gs_path: str, file_path: str, public: bool = True, content_type="image/png"):
+    bucket = storage.bucket(bucket_name)
+    blob = bucket.blob(gs_path)
+    blob.upload_from_filename(file_path, content_type=content_type)
+    if public:
+        blob.make_public()
+
+
+def send_payload_to_api(args, output_files_gcs_paths,
+                        start_time, end_time):
+
+    # Create the payload as a dictionary
+    payload = {
+        "repo": args.repo,
+        "run_id": args.run_id,
+        "os": args.os,
+        "cuda_version": args.cuda_version,
+        "output_files_gcs_paths": output_files_gcs_paths,
+        "commit_hash": args.commit_hash,
+        "commit_time": args.commit_time,
+        "commit_message": args.commit_message,
+        "branch_name": args.branch_name,
+        "bucket_name": args.bucket_name,
+        "workflow_name": args.workflow_name,
+        "start_time": start_time,
+        "end_time": end_time
+    }
+
+    # Convert payload dictionary to a JSON string
+    payload_json = json.dumps(payload)
+
+    # Send POST request
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(args.api_endpoint, headers=headers, data=payload_json)
+
+    # Write response to application.log
+    log_file_path = "./application.log"
+    with open(log_file_path, 'w', encoding='utf-8') as log_file:
+        log_file.write("\n##### Comfy CI Post Response #####\n")
+        log_file.write(response.text)
+
+    # Check the response code
+    if response.status_code != 200:
+        print(f"API request failed with status code {response.status_code} and response body")
+        print(response.text)
+        exit(1)
     else:
-        print(response_json['prompt_id'])
+        print("API request successful")
+
+    return response.status_code
+
+def main(args):
+    # Split the workflow file names using ","
+    workflow_files = args.comfy_workflow_names.split(',')
+
+    counter = 1
+
+    for file_name in workflow_files:
+        # Construct the file path
+        file_path = f"workflows/{file_name}"
+        start_time = int(datetime.datetime.now().timestamp())
+        subprocess.run(
+            ["comfycli", "run", "--workflow", file_path],
+            check=True,
+        )
+        end_time = int(datetime.datetime.now().timestamp())
+
+        #TODO: add support for multiple file outputs
+        gs_path = f"output-files/{args.github_action_workflow_name}-{args.os}-{args.comfy_workflow_name}-run-${args.run_id}"
+        upload_img_from_filename(args.bucket_name, gs_path, f"{args.workspace_path}/output/{args.output_file_prefix}_{counter:05}_.png", public=True)
+
+        send_payload_to_api(args, gs_path, start_time, end_time)
+        counter += 1
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Send a JSON file contents to a server as a prompt.')
-    parser.add_argument('json_file_path', type=str, help='Path to the JSON file to send.')
-    parser.add_argument('--server-url', type=str, default='http://localhost:8188/prompt', help='URL of the server to send the JSON to.')
+    parser.add_argument('--comfy-workflow-names', type=str, help='List of comfy workflow names.')
+    parser.add_argument('--github-action-workflow-name', type=str, help='Github action workflow name.')
+    parser.add_argument('--os', type=str, help='Operating system.')
+    parser.add_argument('--run-id', type=str, help='Github Run ID.')
+    parser.add_argument('--repo', type=str, help='Github repo.')
+    parser.add_argument('--cuda-version', type=str, help='CUDA version.')
+    parser.add_argument('--commit-hash', type=str, help='Commit hash.')
+    parser.add_argument('--commit-time', type=str, help='Commit time.')
+    parser.add_argument('--commit-message', type=str, help='Commit message.')
+    parser.add_argument('--branch-name', type=str, help='Branch name.')
+    parser.add_argument('--workflow-file-names', type=str, help='Workflow file names.')
+    parser.add_argument('--gsc-bucket-name', type=str, help='Name of the GCS bucket to store the output files in.')
+    parser.add_argument('--workspace-path', type=str, help='Workspace (ComfyUI repo) path, likely ${HOME}/action_runners/_work/ComfyUI/ComfyUI/.')
+    parser.add_argument('--action-path', type=str, help='Action path., likely ${HOME}/action_runners/_work/comfy-action/.')
+    parser.add_argument('--output-file-prefix', type=str, help='Output file prefix.')
 
     args = parser.parse_args()
-    main(args.json_file_path, args.server_url)
+    main(args)
