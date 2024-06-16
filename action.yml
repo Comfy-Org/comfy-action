@@ -110,16 +110,6 @@ runs:
         conda list
       shell: bash -el {0}
 
-    # - name: Download models
-    #   if: ${{ inputs.os != 'windows' }}
-    #   run: |
-    #     cd ${{ github.action_path }}
-    #     ls "${{ github.workspace }}"
-    #     pip3 install -r requirements.txt
-    #     python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
-    #     ls -R "${{ github.workspace }}/models/"
-    #   shell: bash -el {0}
-
     - name: '[Unix] Install dependencies'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
@@ -136,6 +126,13 @@ runs:
         # python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
         cp "${HOME}/v1-5-pruned-emaonly.ckpt" "${{ github.workspace }}/models/checkpoints/"
         cp "${HOME}/epiNoiseoffset_v2.safetensors" "${{ github.workspace }}/models/loras/"
+
+    - name: '[Unix] Authenticate to Google Cloud'
+      shell: bash -el {0}
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > /tmp/keyfile.json
+        gcloud auth activate-service-account --key-file=/tmp/keyfile.json
 
     - name: '[Unix] Run Python application quick test'
       if: ${{ inputs.os != 'windows' }}
@@ -155,6 +152,21 @@ runs:
         cd ${{ github.action_path }}
         python3 poll_server_start.py > application.log 2>&1
       shell: bash -el {0}
+
+    - name: '[Unix] Get Commit Details'
+      id: unix_get_commit_details
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        TIMESTAMP=$(git show -s --format=%cI HEAD^)
+        MESSAGE=$(git show -s --format=%s HEAD^)
+        COMMIT_HASH=$(git rev-parse HEAD^)
+        echo "Commit time: $TIMESTAMP"
+        echo "Commit title: $MESSAGE"
+        echo "Commit hash: $COMMIT_HASH"
+        echo "commit_time=$TIMESTAMP" >> $GITHUB_OUTPUT
+        echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
+        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
     - name: '[Unix] Queue Prompts'
       id: unix_queue_prompt
@@ -185,83 +197,9 @@ runs:
         
     - name: '[Unix] Debug print out commit timestamp and commit message'
       if: ${{ inputs.os != 'windows' }}
-      shell: bash
+      shell: bash -el {0}
       run: |
         echo "Event: ${{ github.event }}"
-
-    - name: '[Unix] Get Commit Details'
-      id: unix_get_commit_details
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash
-      run: |
-        TIMESTAMP=$(git show -s --format=%cI HEAD^)
-        MESSAGE=$(git show -s --format=%s HEAD^)
-        COMMIT_HASH=$(git rev-parse HEAD^)
-        echo "Commit time: $TIMESTAMP"
-        echo "Commit title: $MESSAGE"
-        echo "Commit hash: $COMMIT_HASH"
-        echo "commit_time=$TIMESTAMP" >> $GITHUB_OUTPUT
-        echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
-        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
-
-
-    - name: '[Unix-Only] Install jq'
-      uses: dcarbone/install-jq-action@v2.1.0
-
-    - name: '[Unix] Call API to upload artifact details'
-      if: ${{ inputs.os != 'windows' && success() }}
-      shell: bash
-      run: |
-        payload=$(jq -n \
-          --arg repo "${{ github.repository }}" \
-          --arg run_id "${{ github.run_id }}" \
-          --arg os "${{ inputs.os }}" \
-          --arg cuda_version "${{ inputs.cuda_version }}" \
-          --arg output_files_gcs_paths "${{ steps.upload-output-files.outputs.uploaded }}" \
-          --arg commit_hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" \
-          --arg commit_time "${{ steps.unix_get_commit_details.outputs.commit_time }}" \
-          --arg commit_message "${{ steps.unix_get_commit_details.outputs.commit_title }}" \
-          --arg branch_name "${{ github.ref_name }}" \
-          --arg bucket_name "${{ inputs.gcs_bucket_name }}" \
-          --arg workflow_name "${{ inputs.workflow_name }}" \
-          --argjson start_time "${{ steps.unix_start_time.outputs.start_time }}" \
-          --argjson end_time "${{ steps.unix_end_time.outputs.end_time }}" \
-          '{
-            repo: $repo,
-            run_id: $run_id,
-            os: $os,
-            cuda_version: $cuda_version,
-            output_files_gcs_paths: $output_files_gcs_paths,
-            commit_hash: $commit_hash,
-            commit_time: $commit_time,
-            commit_message: $commit_message,
-            branch_name: $branch_name,
-            bucket_name: $bucket_name,
-            workflow_name: $workflow_name,
-            start_time: $start_time,
-            end_time: $end_time
-          }')
-
-        echo "$payload"
-
-        response_code=$(curl -o "${{ github.workspace }}/application.log" \
-          -s -w "%{http_code}" \
-          -X POST "${{inputs.api_endpoint}}" \
-          -H "Content-Type: application/json" \
-          -d "$payload")
-
-        if [[ $response_code -ne 200 ]]; then
-          echo "API request failed with status code $response_code and response body"
-          cat "${{ github.workspace }}/application.log"
-          exit 1
-        fi
-
-
-    - name: '[Unix] Upload Output Files'
-      uses: actions/upload-artifact@v4
-      with:
-        name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
-        path: ${{ github.workspace }}/output/**
 
     - name: '[Unix] Upload log file'
       uses: actions/upload-artifact@v4
@@ -272,7 +210,7 @@ runs:
 
     - name: '[Unix] Cleanup Repo'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
-      shell: bash
+      shell: bash -el {0}
       run: rm -rf ${{ github.workspace }}/*
 
     - name: '[Unix] Cleanup Conda'

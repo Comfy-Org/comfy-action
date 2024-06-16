@@ -1,11 +1,11 @@
 import argparse
+import datetime
 import json
 import subprocess
-import datetime
 
 import requests
+from google.cloud import storage
 
-from firebase_admin import storage
 
 def read_json_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -29,13 +29,16 @@ def is_completed(status_response, prompt_id):
         and status_response[prompt_id]['status'].get('completed', False)
     )
 
-#TODO: add support for different file type
-def upload_img_from_filename(bucket_name: str, gs_path: str, file_path: str, public: bool = True, content_type="image/png"):
-    bucket = storage.bucket(bucket_name)
-    blob = bucket.blob(gs_path)
-    blob.upload_from_filename(file_path, content_type=content_type)
-    if public:
-        blob.make_public()
+
+def upload_to_gcs(bucket_name: str, destination_blob_name: str, source_file_name: str):
+    storage_client = storage.Client()
+    import pdb
+    pdb.set_trace()
+    bucket = storage_client.get_bucket(bucket_name)
+
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_filename(source_file_name)
+    blob.make_public()
 
 
 def send_payload_to_api(args, output_files_gcs_paths,
@@ -98,8 +101,8 @@ def main(args):
         end_time = int(datetime.datetime.now().timestamp())
 
         #TODO: add support for multiple file outputs
-        gs_path = f"output-files/{args.github_action_workflow_name}-{args.os}-{args.comfy_workflow_name}-run-${args.run_id}"
-        upload_img_from_filename(args.bucket_name, gs_path, f"{args.workspace_path}/output/{args.output_file_prefix}_{counter:05}_.png", public=True)
+        gs_path = f"output-files/{args.github_action_workflow_name}-{args.os}-{file_name}-run-${args.run_id}"
+        upload_to_gcs(args.gsc_bucket_name, gs_path, f"{args.workspace_path}/output-files/{args.output_file_prefix}_{counter:05}_.png")
 
         send_payload_to_api(args, gs_path, start_time, end_time)
         counter += 1
@@ -107,6 +110,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Send a JSON file contents to a server as a prompt.')
+    parser.add_argument('--api-endpoint', type=str, help='API endpoint.')
     parser.add_argument('--comfy-workflow-names', type=str, help='List of comfy workflow names.')
     parser.add_argument('--github-action-workflow-name', type=str, help='Github action workflow name.')
     parser.add_argument('--os', type=str, help='Operating system.')
@@ -117,7 +121,6 @@ if __name__ == "__main__":
     parser.add_argument('--commit-time', type=str, help='Commit time.')
     parser.add_argument('--commit-message', type=str, help='Commit message.')
     parser.add_argument('--branch-name', type=str, help='Branch name.')
-    parser.add_argument('--workflow-file-names', type=str, help='Workflow file names.')
     parser.add_argument('--gsc-bucket-name', type=str, help='Name of the GCS bucket to store the output files in.')
     parser.add_argument('--workspace-path', type=str, help='Workspace (ComfyUI repo) path, likely ${HOME}/action_runners/_work/ComfyUI/ComfyUI/.')
     parser.add_argument('--action-path', type=str, help='Action path., likely ${HOME}/action_runners/_work/comfy-action/.')
