@@ -32,16 +32,13 @@ def is_completed(status_response, prompt_id):
 
 def upload_to_gcs(bucket_name: str, destination_blob_name: str, source_file_name: str):
     storage_client = storage.Client()
-    import pdb
-    pdb.set_trace()
     bucket = storage_client.get_bucket(bucket_name)
 
     blob = bucket.blob(destination_blob_name)
     blob.upload_from_filename(source_file_name)
-    blob.make_public()
 
 
-def send_payload_to_api(args, output_files_gcs_paths,
+def send_payload_to_api(args, output_files_gcs_paths, workflow_name,
                         start_time, end_time):
 
     # Create the payload as a dictionary
@@ -55,8 +52,8 @@ def send_payload_to_api(args, output_files_gcs_paths,
         "commit_time": args.commit_time,
         "commit_message": args.commit_message,
         "branch_name": args.branch_name,
-        "bucket_name": args.bucket_name,
-        "workflow_name": args.workflow_name,
+        "bucket_name": args.gsc_bucket_name,
+        "workflow_name": workflow_name,
         "start_time": start_time,
         "end_time": end_time
     }
@@ -90,9 +87,9 @@ def main(args):
 
     counter = 1
 
-    for file_name in workflow_files:
+    for workflow_file_name in workflow_files:
         # Construct the file path
-        file_path = f"workflows/{file_name}"
+        file_path = f"workflows/{workflow_file_name}"
         start_time = int(datetime.datetime.now().timestamp())
         subprocess.run(
             ["comfycli", "run", "--workflow", file_path],
@@ -101,10 +98,10 @@ def main(args):
         end_time = int(datetime.datetime.now().timestamp())
 
         #TODO: add support for multiple file outputs
-        gs_path = f"output-files/{args.github_action_workflow_name}-{args.os}-{file_name}-run-${args.run_id}"
-        upload_to_gcs(args.gsc_bucket_name, gs_path, f"{args.workspace_path}/output-files/{args.output_file_prefix}_{counter:05}_.png")
+        gs_path = f"output-files/{args.github_action_workflow_name}-{args.os}-{workflow_file_name}-run-${args.run_id}"
+        upload_to_gcs(args.gsc_bucket_name, gs_path, f"{args.workspace_path}/output/{args.output_file_prefix}_{counter:05}_.png")
 
-        send_payload_to_api(args, gs_path, start_time, end_time)
+        send_payload_to_api(args, gs_path, workflow_file_name, start_time, end_time)
         counter += 1
 
 
