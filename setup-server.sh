@@ -1,0 +1,1 @@
+python download-models.py raw  '{"v1-5-pruned-emaonly.ckpt": {"url": "https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors?download=true", "directory": "checkpoints"}}' "${{ github.workspace }}/models/

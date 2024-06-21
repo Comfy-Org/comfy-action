@@ -11,9 +11,16 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Check if action yaml files have step names and if windows actions are aligned with unix actions.")
 parser.add_argument("-c", "--complete", action="store_true", help="Include complete step information")
+parser.add_argument(
+    "-k", "--key", type=str, default="run", help="Include complete step information"
+)
+parser.add_argument(
+    "--fallback-key", type=str, default="", help="Include complete step information"
+)
 parser.add_argument("yaml_file", help="Path to the YAML file")
 
-def conditional_zip(x, y, step_name_runs_map, complete: bool = False):
+
+def conditional_zip(x, y, step_name_extra_info_map, complete: bool = False):
     combined_list = []
     i = 0  # Pointer for x
     j = 0  # Pointer for y
@@ -22,8 +29,8 @@ def conditional_zip(x, y, step_name_runs_map, complete: bool = False):
         x_curr = x[i] if i < len(x) else ''
         y_curr = y[j] if j < len(y) else ''
 
-        x_runs = step_name_runs_map[x_curr] if x_curr != '' else ''
-        y_runs = step_name_runs_map[y_curr] if y_curr != '' else ''
+        x_runs = step_name_extra_info_map[x_curr] if x_curr != "" else ""
+        y_runs = step_name_extra_info_map[y_curr] if y_curr != "" else ""
 
         if '-Only]' in x_curr:
             if complete:
@@ -46,18 +53,21 @@ def conditional_zip(x, y, step_name_runs_map, complete: bool = False):
 
     return combined_list
 
-def get_step_names(yaml_file, complete: bool = False):
+
+def get_step_names(
+    yaml_file, complete: bool = False, step_key: str = "run", fallback_key: str = ""
+):
     with open(yaml_file, 'r') as file:
         data = yaml.safe_load(file)
-    
+
     steps = data['runs']['steps']
 
     for step in steps:
         if 'name' not in step:
             raise Exception("Step name not found in the action file: {}".format(step))
-    
-    step_name_runs_map = {}
-        
+
+    step_name_extra_info_map = {}
+
     step_names = [step['name'] for step in steps if '[Universal]' not in step['name']]
     unix_step_names = []
     wins_step_names = []
@@ -67,20 +77,29 @@ def get_step_names(yaml_file, complete: bool = False):
 
         if '[Win' in step['name']:
             wins_step_names.append(step['name'])
-        step_name_runs_map[step['name']] = step['run'] if 'run' in step else step.get('uses', '[No run or uses info]')
+        step_name_extra_info_map[step["name"]] = (
+            step[step_key]
+            if step_key in step
+            else step.get(
+                fallback_key if fallback_key != "" else "lalala", "[Not Info]"
+            )
+        )
 
     if len(unix_step_names) + len(wins_step_names) != len(step_names):
         uncategorized_steps = set(step_names) - set(unix_step_names + wins_step_names)
         raise Exception("There steps are not categorized: {}".format(uncategorized_steps))
-    
-    tabulated_list = conditional_zip(unix_step_names, wins_step_names, step_name_runs_map, complete=complete)
-    
+
+    tabulated_list = conditional_zip(
+        unix_step_names, wins_step_names, step_name_extra_info_map, complete=complete
+    )
+
     print(tabulate(tabulated_list, headers=['Unix', 'Windows'], tablefmt='grid'))
 
+
 if __name__ == "__main__":
+    args = parser.parse_args()
 
-        args = parser.parse_args()
-
-        yaml_file = args.yaml_file
-        get_step_names(yaml_file, args.complete)
-    
+    yaml_file = args.yaml_file
+    get_step_names(
+        yaml_file, args.complete, step_key=args.key, fallback_key=args.fallback_key
+    )

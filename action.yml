@@ -5,19 +5,34 @@ inputs:
     description: "Operating System. macos, linux, windows."
     required: true
     default: ""
+  python_version:
+    description: "Python Version. Will be used in the conda install command for pytorch. 3.9 or 3.10. Only valid when os is linux or windows."
+    required: false
+    default: "3.9"
   cuda_version:
     description: "CUDA Version. Will be used in the conda install command for pytorch. 11.8 or 12.1. Only valid when os is linux or windows."
     required: false
     default: "12.1"
+  torch_version:
+    description: "Pytorch Version. Will be used in the conda install command for pytorch. 1.10.0 or 1.11.0. Only valid when os is linux or windows."
+    required: false
+    default: 'stable'
   models-json:
     description: 'JSON string containing models and their download URLs. The models will be downloaded into the exact directory relative to /ComfyUI/models/. eg { "model_name": { url: "https://example.com/model.pth", "directory": "checkpoints" } }'
+    required: false
+  workflow_filenames:
+    description: "List of workflows to run. Seperate by comma. eg.
+    'workflow1,workflow2'. The list of workflow is listed in workflows/"
     required: true
-  workflow_name:
-    description: "Name of the workflow to run. This is used to identify the workflow in the logs."
-    required: true
-  workflow_json_path:
-    description: "Path (relative to the root of the Github repo) of the Workflow JSON to run. Must be API format JSON."
-    required: true
+  comfyui_flags:
+    description: "Flags to pass to the comfyui application. eg. --force-fp16"
+    required: false
+    default: ''
+  # Not yet supported
+  workflow_raw_json:
+    description: "Workflow's raw json file"
+    required: false
+    default: ''
   timeout:
     description: "Timeout for the workflow (in seconds)"
     required: false
@@ -31,6 +46,7 @@ inputs:
   output_prefix:
     description: "Prefix for the output files. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
     required: false
+    default: "ComfyUI"
   api_endpoint:
     description: "Comfy Org API endpoint"
     required: false
@@ -73,6 +89,7 @@ runs:
         miniconda-version: latest
         activate-environment: comfyui
         auto-activate-base: false
+        python-version: ${{ inputs.python_version }}
 
     - name: '[Unix-Mac-Only] Install Pytorch nightly'
       if: ${{ inputs.os == 'macos' }}
@@ -93,16 +110,6 @@ runs:
         conda list
       shell: bash -el {0}
 
-    # - name: Download models
-    #   if: ${{ inputs.os != 'windows' }}
-    #   run: |
-    #     cd ${{ github.action_path }}
-    #     ls "${{ github.workspace }}"
-    #     pip3 install -r requirements.txt
-    #     python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
-    #     ls -R "${{ github.workspace }}/models/"
-    #   shell: bash -el {0}
-
     - name: '[Unix] Install dependencies'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
@@ -120,17 +127,24 @@ runs:
         cp "${HOME}/v1-5-pruned-emaonly.ckpt" "${{ github.workspace }}/models/checkpoints/"
         cp "${HOME}/epiNoiseoffset_v2.safetensors" "${{ github.workspace }}/models/loras/"
 
+    - name: '[Unix] Authenticate to Google Cloud'
+      shell: bash -el {0}
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > /tmp/keyfile.json
+        gcloud auth activate-service-account --key-file=/tmp/keyfile.json
+
     - name: '[Unix] Run Python application quick test'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        python main.py --quick-test-for-ci
+        comfy launch -- --quick-test-for-ci
 
     - name: '[Unix] Run Python application'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        python3 main.py --force-fp16 > application.log 2>&1 &
+        comfy launch -- --force-fp16 > application.log 2>&1 &
 
     - name: '[Unix] Check if the server is running'
       if: ${{ inputs.os != 'windows' }}
@@ -138,6 +152,21 @@ runs:
         cd ${{ github.action_path }}
         python3 poll_server_start.py > application.log 2>&1
       shell: bash -el {0}
+
+    - name: '[Unix] Get Commit Details'
+      id: unix_get_commit_details
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        TIMESTAMP=$(git show -s --format=%cI HEAD^)
+        MESSAGE=$(git show -s --format=%s HEAD^)
+        COMMIT_HASH=$(git rev-parse HEAD^)
+        echo "Commit time: $TIMESTAMP"
+        echo "Commit title: $MESSAGE"
+        echo "Commit hash: $COMMIT_HASH"
+        echo "commit_time=$TIMESTAMP" >> $GITHUB_OUTPUT
+        echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
+        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
     - name: '[Unix] Queue Prompts'
       id: unix_queue_prompt
@@ -152,42 +181,11 @@ runs:
         echo "Script output: "
         echo "$PROMPT_ID"
 
-    - name: '[Unix] Get start time'
-      id: unix_start_time
-      shell: bash
-      if: ${{ inputs.os != 'windows' }}
-      run: |
-        echo "start_time=$(date +%s)" >> $GITHUB_OUTPUT
-
-    - name: '[Unix] Check Prompt Status and Get Output Files'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        cd ${{ github.action_path }}
-        echo "Prompt ID: ${{ steps.unix_queue_prompt.outputs.prompt_id }}"
-        python3 check_prompt_status.py ${{ steps.unix_queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
-
-    - name: '[Unix] Get end time Unix'
-      id: unix_end_time
-      shell: bash
-      if: ${{ inputs.os != 'windows' }}
-      run: |
-        echo "end_time=$(date +%s)" >> $GITHUB_OUTPUT
-
     - name: '[Unix] Auth to GCS'
       uses: "google-github-actions/auth@v2"
       if: ${{ inputs.os != 'windows' }}
       with:
         credentials_json: "${{ inputs.google_credentials }}"
-
-    - name: '[Unix] Upload Output Files to GCS'
-      if: ${{ success() && inputs.os != 'windows' }}
-      id: unix_upload-output-files
-      uses: google-github-actions/upload-cloud-storage@v2
-      with:
-        path: ${{ github.workspace }}/output
-        destination: ${{ inputs.gcs_bucket_name }}/output-files/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
-        glob: "${{ inputs.output_prefix }}*"
 
     - name: '[Unix] Upload log file to GCS'
       if: ${{ ( success() || failure() ) && inputs.os != 'windows' }}
@@ -199,82 +197,9 @@ runs:
         
     - name: '[Unix] Debug print out commit timestamp and commit message'
       if: ${{ inputs.os != 'windows' }}
-      shell: bash
+      shell: bash -el {0}
       run: |
         echo "Event: ${{ github.event }}"
-
-    - name: '[Unix] Get Commit Details'
-      id: unix_get_commit_details
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash
-      run: |
-        TIMESTAMP=$(git show -s --format=%cI HEAD^)
-        MESSAGE=$(git show -s --format=%s HEAD^)
-        COMMIT_HASH=$(git rev-parse HEAD^)
-        echo "Commit time: $TIMESTAMP"
-        echo "Commit title: $MESSAGE"
-        echo "Commit hash: $COMMIT_HASH"
-        echo "commit_time=$TIMESTAMP" >> $GITHUB_OUTPUT
-        echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
-        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
-
-
-    - name: '[Unix-Only] Install jq'
-      uses: dcarbone/install-jq-action@v2.1.0
-
-    - name: '[Unix] Call API to upload artifact details'
-      if: ${{ inputs.os != 'windows' && success() }}
-      shell: bash
-      run: |
-        payload=$(jq -n \
-          --arg repo "${{ github.repository }}" \
-          --arg run_id "${{ github.run_id }}" \
-          --arg os "${{ inputs.os }}" \
-          --arg cuda_version "${{ inputs.cuda_version }}" \
-          --arg output_files_gcs_paths "${{ steps.upload-output-files.outputs.uploaded }}" \
-          --arg commit_hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" \
-          --arg commit_time "${{ steps.unix_get_commit_details.outputs.commit_time }}" \
-          --arg commit_message "${{ steps.unix_get_commit_details.outputs.commit_title }}" \
-          --arg branch_name "${{ github.ref_name }}" \
-          --arg bucket_name "${{ inputs.gcs_bucket_name }}" \
-          --arg workflow_name "${{ inputs.workflow_name }}" \
-          --argjson start_time "${{ steps.unix_start_time.outputs.start_time }}" \
-          --argjson end_time "${{ steps.unix_end_time.outputs.end_time }}" \
-          '{
-            repo: $repo,
-            run_id: $run_id,
-            os: $os,
-            cuda_version: $cuda_version,
-            output_files_gcs_paths: $output_files_gcs_paths,
-            commit_hash: $commit_hash,
-            commit_time: $commit_time,
-            commit_message: $commit_message,
-            branch_name: $branch_name,
-            bucket_name: $bucket_name,
-            workflow_name: $workflow_name,
-            start_time: $start_time,
-            end_time: $end_time
-          }')
-        
-        echo "$payload"
-
-        response_code=$(curl -o "${{ github.workspace }}/application.log" \
-          -s -w "%{http_code}" \
-          -X POST "${{inputs.api_endpoint}}" \
-          -H "Content-Type: application/json" \
-          -d "$payload")
-        if [[ $response_code -ne 200 ]]; then
-          echo "API request failed with status code $response_code and response body"
-          cat "${{ github.workspace }}/application.log"
-          exit 1
-        fi
-                
-
-    - name: '[Unix] Upload Output Files'
-      uses: actions/upload-artifact@v4
-      with:
-        name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
-        path: ${{ github.workspace }}/output/**
 
     - name: '[Unix] Upload log file'
       uses: actions/upload-artifact@v4
@@ -285,7 +210,7 @@ runs:
 
     - name: '[Unix] Cleanup Repo'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
-      shell: bash
+      shell: bash -el {0}
       run: rm -rf ${{ github.workspace }}/*
 
     - name: '[Unix] Cleanup Conda'
@@ -294,27 +219,27 @@ runs:
       run: conda deactivate && conda env remove --name comfyui && conda clean -all
 
 
-    ##################################################################################### 
-    ##                           Windows Steps (F**k powershell)                       ## 
-    ##                                                                                 ## 
-    ##               _.-;;-._      _                                                   ## 
-    ##        '-..-'|   ||   |    | |                                                  ## 
-    ##        '-..-'|_.-;;-._|    | |===( )   //////                                   ## 
-    ##        '-..-'|   ||   |    |_|   |||  | o o|                                    ## 
-    ##        '-..-'|_.-''-._|           ||| ( c  )                  ____              ## 
-    ##                                    ||| \= /                  ||   \_            ## 
-    ##                                     ||||||                   ||     |           ## 
-    ##                                     ||||||                ...||__/|-"           ## 
-    ##                                     ||||||             __|________|__           ## 
-    ##                                       |||             |______________|          ## 
-    ##                                       |||             || ||      || ||          ## 
-    ##                                       |||             || ||      || ||          ## 
-    ##  -------------------------------------|||-------------||-||------||-||-------   ## 
-    ##                                       |__>            || ||      || ||          ## 
-    ##                                                                                 ## 
-    ##                                                                                 ## 
-    ##################################################################################### 
-   
+    #####################################################################################
+    ##                           Windows Steps (F**k powershell)                       ##
+    ##                                                                                 ##
+    ##               _.-;;-._      _                                                   ##
+    ##        '-..-'|   ||   |    | |                                                  ##
+    ##        '-..-'|_.-;;-._|    | |===( )   //////                                   ##
+    ##        '-..-'|   ||   |    |_|   |||  | o o|                                    ##
+    ##        '-..-'|_.-''-._|           ||| ( c  )                  ____              ##
+    ##                                    ||| \= /                  ||   \_            ##
+    ##                                     ||||||                   ||     |           ##
+    ##                                     ||||||                ...||__/|-"           ##
+    ##                                     ||||||             __|________|__           ##
+    ##                                       |||             |______________|          ##
+    ##                                       |||             || ||      || ||          ##
+    ##                                       |||             || ||      || ||          ##
+    ##  -------------------------------------|||-------------||-||------||-||-------   ##
+    ##                                       |__>            || ||      || ||          ##
+    ##                                                                                 ##
+    ##                                                                                 ##
+    #####################################################################################
+
     - name: '[Win] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os == 'windows' }}
@@ -322,6 +247,7 @@ runs:
         auto-update-conda: true
         miniconda-version: latest
         activate-environment: comfyui
+        python-version: ${{ inputs.python_version }}
       continue-on-error: true
 
     - name: '[Win-Only] Install Pytorch'
