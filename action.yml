@@ -127,13 +127,6 @@ runs:
         cp "${HOME}/v1-5-pruned-emaonly.ckpt" "${{ github.workspace }}/models/checkpoints/"
         cp "${HOME}/epiNoiseoffset_v2.safetensors" "${{ github.workspace }}/models/loras/"
 
-    - name: '[Unix] Authenticate to Google Cloud'
-      shell: bash -el {0}
-      if: ${{ inputs.os != 'windows' }}
-      run: |
-        echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > /tmp/keyfile.json
-        gcloud auth activate-service-account --key-file=/tmp/keyfile.json
-
     - name: '[Unix] Run Python application quick test'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
