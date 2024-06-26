@@ -93,7 +93,7 @@ runs:
           # Increase this value to reset cache if etc/environment.yml has not changed
           CACHE_NUMBER: 0
       with:
-        path: ~/miniconda3/pkgs
+        path: ~/miniconda3/envs/comfyui
         key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', inputs.conda_env_file)) }}
       
     - name: '[Unix] Setup Conda'
