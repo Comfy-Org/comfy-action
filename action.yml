@@ -98,12 +98,6 @@ runs:
         comfy --version
         comfy --skip-prompt --no-enable-telemetry env
 
-    - name: '[Unix] Install Comfy'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        comfy install --skip-manager
-
     - name: '[Unix-Mac-Only] Install Pytorch nightly'
       if: ${{ inputs.os == 'macos' }}
       shell: bash -el {0}
@@ -136,26 +130,13 @@ runs:
       run: |
         cd ${{ github.action_path }}
         ls "${{ github.workspace }}"
-        # python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+        python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
 
-    - name: '[Unix] Run Python application quick test'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        python main.py --quick-test-for-ci
-
-    - name: '[Unix] Run Python application'
+    - name: '[Unix] Run Python application in background'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
         python3 main.py --force-fp16 > application.log 2>&1 &
-
-    - name: '[Unix] Check if the server is running'
-      if: ${{ inputs.os != 'windows' }}
-      run: |
-        cd ${{ github.action_path }}
-        python3 poll_server_start.py > application.log 2>&1
-      shell: bash -el {0}
 
     - name: '[Unix] Get Commit Details'
       id: unix_get_commit_details
@@ -177,22 +158,8 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        echo "Full path to the JSON file: $inputs.workflow_filenames"
-        python3 queue_prompt.py --comfy_workflow_names $inputs.workflow_filenames --github_action_workflow_name ${{ github.workflow }} --os ${{ runner.os }} --run_id ${{ github.run_id }} --gsc_bucket_name your-bucket-name --workspace_path /path/to/workspace --output_file_prefix output
-
-    - name: '[Unix] Auth to GCS'
-      uses: "google-github-actions/auth@v2"
-      if: ${{ inputs.os != 'windows' }}
-      with:
-        credentials_json: "${{ inputs.google_credentials }}"
-
-    - name: '[Unix] Upload log file to GCS'
-      if: ${{ ( success() || failure() ) && inputs.os != 'windows' }}
-      id: unix_upload-log-files
-      uses: google-github-actions/upload-cloud-storage@v2
-      with:
-        path: ${{ github.workspace }}/application.log
-        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+        echo "Running workflows: $inputs.workflow_filenames"
+        python3 queue_prompt.py --comfy_workflow_names $inputs.workflow_filenames --github_action_workflow_name ${{ github.workflow }} --os ${{ runner.os }} --run_id ${{ github.run_id }} --gsc_bucket_name ${{ inputs.gcs_bucket_name }} --workspace_path ${{ github.workspace }} --output_file_prefix output --repo ${{ github.repository }} --commit_hash $COMMIT_HASH --commit_time $TIMESTAMP --commit_message $MESSAGE --branch_name ${{ github.ref_name }} --api_endpoint ${{ inputs.api_endpoint }} 
         
     - name: '[Unix] Debug print out commit timestamp and commit message'
       if: ${{ inputs.os != 'windows' }}
