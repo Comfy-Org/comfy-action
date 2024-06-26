@@ -21,7 +21,7 @@ inputs:
     description: 'JSON string containing models and their download URLs. The models will be downloaded into the exact directory relative to /ComfyUI/models/. eg { "model_name": { url: "https://example.com/model.pth", "directory": "checkpoints" } }'
     required: false
   workflow_filenames:
-    description: "List of workflows to run. Separate by comma, e.g., 'workflow1,workflow2'. The list of workflows is listed in the workflows/ directory."
+    description: "The list of workflow filenames is listed in the workflows/ directory. Separate by comma, e.g., 'workflow1.json,workflow2.json'."
     required: true
   comfyui_flags:
     description: "Flags to pass to the comfyui application. eg. --force-fp16"
@@ -80,6 +80,16 @@ runs:
     ##  `-----------------------'                             ##
     ############################################################
 
+    - name: '[Unix] Install Comfy-CLI'
+      shell: bash -el {0}
+      run: |
+        pip install comfy-cli
+
+    - name: '[Unix] Install Comfy'
+      shell: bash -el {0}
+      run: |
+        comfy install
+
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os != 'windows' }}
@@ -96,7 +106,7 @@ runs:
       run: |
         conda install pytorch torchvision torchaudio -c pytorch-nightly
 
-    - name: '[Unix-Liux-Only] Install Pytorch'
+    - name: '[Unix-Linux-Only] Install Pytorch'
       if: ${{ inputs.os == 'linux' }}
       shell: bash -el {0}
       run: |
@@ -123,8 +133,6 @@ runs:
         cd ${{ github.action_path }}
         ls "${{ github.workspace }}"
         # python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
-        cp "${HOME}/v1-5-pruned-emaonly.ckpt" "${{ github.workspace }}/models/checkpoints/"
-        cp "${HOME}/epiNoiseoffset_v2.safetensors" "${{ github.workspace }}/models/loras/"
 
     - name: '[Unix] Run Python application quick test'
       if: ${{ inputs.os != 'windows' }}
@@ -165,13 +173,8 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        cd ${{ github.action_path }}
-        FULL_PATH="${GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
-        echo "Full path to the JSON file: $FULL_PATH"
-        PROMPT_ID=$(python3 queue_prompt.py "$FULL_PATH" 2>&1)
-        echo "prompt_id=$PROMPT_ID" >> $GITHUB_OUTPUT
-        echo "Script output: "
-        echo "$PROMPT_ID"
+        echo "Full path to the JSON file: $inputs.workflow_filenames"
+        python3 queue_prompt.py --comfy_workflow_names $inputs.workflow_filenames --github_action_workflow_name ${{ github.workflow }} --os ${{ runner.os }} --run_id ${{ github.run_id }} --gsc_bucket_name your-bucket-name --workspace_path /path/to/workspace --output_file_prefix output
 
     - name: '[Unix] Auth to GCS'
       uses: "google-github-actions/auth@v2"
