@@ -91,7 +91,7 @@ runs:
           CACHE_NUMBER: 0
       with:
         path: ~/conda_pkgs_dir
-        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('etc/environment.yml) }}
+        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('etc/environment.yml') }}
       
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3
