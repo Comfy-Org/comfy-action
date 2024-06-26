@@ -91,7 +91,7 @@ runs:
           CACHE_NUMBER: 0
       with:
         path: ~/conda_pkgs_dir
-        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('etc/environment.yml') }}
+        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('environments/{0}-environment.yml', inputs.os)) }}
       
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3
@@ -99,13 +99,16 @@ runs:
       with:
         activate-environment: comfyui
         auto-activate-base: false
-        environment: etc/environment.yml
+        environment: environments/${{ inputs.os }}-environment.yml
         use-only-tar-bz2: true
+        python-version: ${{ inputs.python_version }}  
 
     - name: '[Unix] Install Comfy-CLI'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        which pip
+        which pip3
         pip3 install comfy-cli
         comfy --version
         comfy --skip-prompt --no-enable-telemetry env

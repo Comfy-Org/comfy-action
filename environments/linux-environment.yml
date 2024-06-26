@@ -1,0 +1,11 @@
+name: comfyui
+channels:
+  - pytorch
+  - nvidia
+  - defaults
+dependencies:
+  - python>=3.9  # Specify the version of Python you need
+  - pytorch
+  - torchvision
+  - torchaudio
+  - cudatoolkit=12.1
