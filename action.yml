@@ -148,6 +148,13 @@ runs:
       run: |
         python3 main.py > application.log 2>&1 &
 
+    - name: '[Unix] Check if the server is running'
+      if: ${{ inputs.os != 'windows' }}
+      run: |
+        cd ${{ github.action_path }}
+        python3 poll_server_start.py > application.log 2>&1
+      shell: bash -el {0}
+
     - name: '[Unix] Get Commit Details'
       id: unix_get_commit_details
       if: ${{ inputs.os != 'windows' }}

@@ -113,8 +113,9 @@ def main(args):
             )
             print("Output:", result.stdout)
         except subprocess.CalledProcessError as e:
-            print("Output:", e.stdout)
+            print("Error STD Out:", e.stdout)
             print("Error:", e.stderr)
+            raise e
 
         print(f"Workflow {file_path} completed")
         end_time = int(datetime.datetime.now().timestamp())
