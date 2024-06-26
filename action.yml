@@ -87,9 +87,7 @@ runs:
     - name: Debug environment file path
       shell: bash -el {0}
       run: |
-        echo "Environment file path: ${{ github.action_path }}/environments/${{ inputs.os }}-environment.yml"
-        ls ${{ github.action_path }}
-        ls ${{ github.action_path }}/environments
+        ls ${{ github.action_path }}/environments/linux-environment.yml
   
     - name: Cache conda
       uses: actions/cache@v4
