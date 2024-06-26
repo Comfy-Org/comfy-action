@@ -104,67 +104,68 @@ runs:
         comfy --version
         comfy --skip-prompt --no-enable-telemetry env
 
-    - name: '[Unix-Mac-Only] Install Pytorch nightly'
-      if: ${{ inputs.os == 'macos' }}
-      shell: bash -el {0}
-      run: |
-        conda install pytorch torchvision torchaudio -c pytorch-nightly
+    # - name: '[Unix-Mac-Only] Install Pytorch nightly'
+    #   if: ${{ inputs.os == 'macos' }}
+    #   shell: bash -el {0}
+    #   run: |
+    #     conda install pytorch torchvision torchaudio -c pytorch-nightly
 
-    - name: '[Unix-Linux-Only] Install Pytorch'
-      if: ${{ inputs.os == 'linux' }}
-      shell: bash -el {0}
-      run: |
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
+    # - name: '[Unix-Linux-Only] Install Pytorch'
+    #   if: ${{ inputs.os == 'linux' }}
+    #   shell: bash -el {0}
+    #   run: |
+    #     conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
 
-    - name: '[Unix] Check conda environment'
-      if: ${{ inputs.os != 'windows' }}
-      run: |
-        conda info
-        conda list
-      shell: bash -el {0}
+    # - name: '[Unix] Check conda environment'
+    #   if: ${{ inputs.os != 'windows' }}
+    #   run: |
+    #     conda info
+    #     conda list
+    #   shell: bash -el {0}
 
-    - name: '[Unix] Install dependencies'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        which pip3
-        pip3 install -r requirements.txt
+    # - name: '[Unix] Install dependencies'
+    #   if: ${{ inputs.os != 'windows' }}
+    #   shell: bash -el {0}
+    #   run: |
+    #     which pip3
+    #     pip3 install -r requirements.txt
 
-    - name: '[Unix] Download model'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        cd ${{ github.action_path }}
-        ls "${{ github.workspace }}"
-        pip3 install -r requirements.txt
-        python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+    # - name: '[Unix] Download models'
+    #   if: ${{ inputs.os != 'windows' }}
+    #   shell: bash -el {0}
+    #   run: |
+    #     cd ${{ github.action_path }}
+    #     ls "${{ github.workspace }}"
+    #     pip3 install -r requirements.txt
+    #     python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
 
-    - name: '[Unix] Run Python application in background'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        python3 main.py --force-fp16 > application.log 2>&1 &
+    # - name: '[Unix] Run Python application in background'
+    #   if: ${{ inputs.os != 'windows' }}
+    #   shell: bash -el {0}
+    #   run: |
+    #     python3 main.py --force-fp16 > application.log 2>&1 &
 
-    - name: '[Unix] Get Commit Details'
-      id: unix_get_commit_details
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        TIMESTAMP=$(git show -s --format=%cI HEAD^)
-        MESSAGE=$(git show -s --format=%s HEAD^)
-        COMMIT_HASH=$(git rev-parse HEAD^)
-        echo "Commit time: $TIMESTAMP"
-        echo "Commit title: $MESSAGE"
-        echo "Commit hash: $COMMIT_HASH"
-        echo "commit_time=$TIMESTAMP" >> $GITHUB_OUTPUT
-        echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
-        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+    # - name: '[Unix] Get Commit Details'
+    #   id: unix_get_commit_details
+    #   if: ${{ inputs.os != 'windows' }}
+    #   shell: bash -el {0}
+    #   run: |
+    #     TIMESTAMP=$(git show -s --format=%cI HEAD^)
+    #     MESSAGE=$(git show -s --format=%s HEAD^)
+    #     COMMIT_HASH=$(git rev-parse HEAD^)
+    #     echo "Commit time: $TIMESTAMP"
+    #     echo "Commit title: $MESSAGE"
+    #     echo "Commit hash: $COMMIT_HASH"
+    #     echo "commit_time=$TIMESTAMP" >> $GITHUB_OUTPUT
+    #     echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
+    #     echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
     - name: '[Unix] Queue Prompts'
       id: unix_queue_prompt
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        cd ${{ github.action_path }}
         echo "Running workflows: $inputs.workflow_filenames"
         python3 queue_prompt.py --comfy_workflow_names $inputs.workflow_filenames --github_action_workflow_name ${{ github.workflow }} --os ${{ runner.os }} --run_id ${{ github.run_id }} --gsc_bucket_name ${{ inputs.gcs_bucket_name }} --workspace_path ${{ github.workspace }} --output_file_prefix output --repo ${{ github.repository }} --commit_hash $COMMIT_HASH --commit_time $TIMESTAMP --commit_message $MESSAGE --branch_name ${{ github.ref_name }} --api_endpoint ${{ inputs.api_endpoint }} 
         
