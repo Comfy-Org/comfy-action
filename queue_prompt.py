@@ -103,10 +103,15 @@ def main(args):
         file_path = f"workflows/{workflow_file_name}"
         print(f"Running workflow {file_path}")
         start_time = int(datetime.datetime.now().timestamp())
-        subprocess.run(
-            ["comfy", "--here", "run", "--workflow", file_path],
+        result = subprocess.run(
+            ["comfy", "run", "--workflow", file_path],
             check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
+        print("Output:", result.stdout)
+        print("Error:", result.stderr if result.stderr else "No errors.")
         print(f"Workflow {file_path} completed")
         end_time = int(datetime.datetime.now().timestamp())
 
