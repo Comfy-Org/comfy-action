@@ -149,20 +149,20 @@ runs:
     #   run: |
     #     python3 main.py --force-fp16 > application.log 2>&1 &
 
-    # - name: '[Unix] Get Commit Details'
-    #   id: unix_get_commit_details
-    #   if: ${{ inputs.os != 'windows' }}
-    #   shell: bash -el {0}
-    #   run: |
-    #     TIMESTAMP=$(git show -s --format=%cI HEAD^)
-    #     MESSAGE=$(git show -s --format=%s HEAD^)
-    #     COMMIT_HASH=$(git rev-parse HEAD^)
-    #     echo "Commit time: $TIMESTAMP"
-    #     echo "Commit title: $MESSAGE"
-    #     echo "Commit hash: $COMMIT_HASH"
-    #     echo "commit_time=$TIMESTAMP" >> $GITHUB_OUTPUT
-    #     echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
-    #     echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+    - name: '[Unix] Get Commit Details'
+      id: unix_get_commit_details
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        TIMESTAMP=$(git show -s --format=%cI HEAD^)
+        MESSAGE=$(git show -s --format=%s HEAD^)
+        COMMIT_HASH=$(git rev-parse HEAD^)
+        echo "Commit time: $TIMESTAMP"
+        echo "Commit title: $MESSAGE"
+        echo "Commit hash: $COMMIT_HASH"
+        echo "commit_time=$TIMESTAMP" >> $GITHUB_OUTPUT
+        echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
+        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
     - name: '[Unix] Queue Prompts'
       id: unix_queue_prompt
