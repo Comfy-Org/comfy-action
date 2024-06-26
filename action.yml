@@ -79,14 +79,6 @@ runs:
     ##  |   -----------     ::: |         `-'       `--'      ##
     ##  `-----------------------'                             ##
     ############################################################
-
-    - name: '[Unix] Install Comfy-CLI'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -elx {0}
-      run: |
-        pip install comfy-cli
-        comfy --version
-        comfy --skip-prompt --no-enable-telemetry env
         
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3
@@ -97,6 +89,14 @@ runs:
         activate-environment: comfyui
         auto-activate-base: false
         python-version: ${{ inputs.python_version }}
+
+    - name: '[Unix] Install Comfy-CLI'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        pip install comfy-cli
+        comfy --version
+        comfy --skip-prompt --no-enable-telemetry env
 
     - name: '[Unix] Install Comfy'
       if: ${{ inputs.os != 'windows' }}
