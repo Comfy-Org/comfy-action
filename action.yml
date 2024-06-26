@@ -82,17 +82,27 @@ runs:
     - name: 'Auth to GCS'
       uses: "google-github-actions/auth@v2"
       with:
-        credentials_json: "${{ inputs.google_credentials }}"  
+        credentials_json: "${{ inputs.google_credentials }}"
+    
+    - name: Cache conda
+      uses: actions/cache@v4
+      env:
+          # Increase this value to reset cache if etc/environment.yml has not changed
+          CACHE_NUMBER: 0
+      with:
+        path: ~/conda_pkgs_dir
+        key:
+          ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+          hashFiles('etc/environment.yml }}
       
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3
       if: ${{ inputs.os != 'windows' }}
       with:
-        auto-update-conda: true
-        miniconda-version: latest
         activate-environment: comfyui
         auto-activate-base: false
-        python-version: ${{ inputs.python_version }}
+        environment: etc/environment.yml
+        use-only-tar-bz2: true
 
     - name: '[Unix] Install Comfy-CLI'
       if: ${{ inputs.os != 'windows' }}
@@ -101,12 +111,6 @@ runs:
         pip3 install comfy-cli
         comfy --version
         comfy --skip-prompt --no-enable-telemetry env
-
-    - name: '[Unix-Mac-Only] Install Pytorch nightly'
-      if: ${{ inputs.os == 'macos' }}
-      shell: bash -el {0}
-      run: |
-        conda install pytorch torchvision torchaudio -c pytorch-nightly
 
     - name: '[Unix-Linux-Only] Install Pytorch'
       if: ${{ inputs.os == 'linux' }}
