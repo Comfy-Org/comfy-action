@@ -94,13 +94,13 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        pip install -r requirements.txt
+        pip3 install -r requirements.txt
 
     - name: '[Unix] Install Comfy-CLI'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        pip install comfy-cli
+        pip3 install comfy-cli
         comfy --version
         comfy --skip-prompt --no-enable-telemetry env
 
