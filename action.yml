@@ -129,11 +129,17 @@ runs:
         cd ${{ github.action_path }}
         pip3 install -r requirements.txt
     
+    - name: Generate hash from models-json
+      id: generate_hash
+      run: |
+        echo "::set-output name=hash::$(echo '${{ inputs.models-json }}' | sha256sum | cut -d ' ' -f1)"
+      shell: bash
+
     - name: Cache models
       uses: actions/cache@v4
       with:
         path: ${{ github.workspace }}/models
-        key: ${{ runner.os }}-models-${{ hashFiles(format('{0}', inputs.models-json)) }}
+        key: ${{ runner.os }}-models-${{ steps.generate_hash.outputs.hash }}
   
     - name: '[Unix] Download models'
       if: ${{ inputs.os != 'windows' }}
