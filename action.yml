@@ -90,6 +90,12 @@ runs:
         auto-activate-base: false
         python-version: ${{ inputs.python_version }}
 
+    - name: '[Unix] Install pip requirements'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        pip install -r requirements.txt
+
     - name: '[Unix] Install Comfy-CLI'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
@@ -130,6 +136,7 @@ runs:
       run: |
         cd ${{ github.action_path }}
         ls "${{ github.workspace }}"
+        pip3 install -r requirements.txt
         python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
 
     - name: '[Unix] Run Python application in background'
