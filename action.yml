@@ -85,6 +85,9 @@ runs:
       shell: bash -el {0}
       run: |
         pip install comfy-cli
+        comfy --version
+        comfy --skip-prompt --no-enable-telemetry env
+        
 
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3.0.3
@@ -100,7 +103,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        comfy install
+        comfy install --skip-manager
 
     - name: '[Unix-Mac-Only] Install Pytorch nightly'
       if: ${{ inputs.os == 'macos' }}
