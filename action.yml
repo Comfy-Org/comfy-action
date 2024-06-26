@@ -79,7 +79,11 @@ runs:
     ##  |   -----------     ::: |         `-'       `--'      ##
     ##  `-----------------------'                             ##
     ############################################################
-        
+    - name: 'Auth to GCS'
+      uses: "google-github-actions/auth@v2"
+      with:
+        credentials_json: "${{ inputs.google_credentials }}"  
+      
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3
       if: ${{ inputs.os != 'windows' }}
