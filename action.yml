@@ -113,12 +113,6 @@ runs:
         comfy --version
         comfy --skip-prompt --no-enable-telemetry env
 
-    - name: '[Unix-Linux-Only] Install Pytorch'
-      if: ${{ inputs.os == 'linux' }}
-      shell: bash -el {0}
-      run: |
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
-
     - name: '[Unix] Check conda environment'
       if: ${{ inputs.os != 'windows' }}
       run: |
