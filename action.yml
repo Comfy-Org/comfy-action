@@ -171,7 +171,7 @@ runs:
       run: |
         cd ${{ github.action_path }}
         echo "Running workflows: ${{inputs.workflow_filenames}}"
-        python3 queue_prompt.py --comfy_workflow_names $inputs.workflow_filenames --github_action_workflow_name ${{ github.workflow }} --os ${{ runner.os }} --run_id ${{ github.run_id }} --gsc_bucket_name ${{ inputs.gcs_bucket_name }} --workspace_path ${{ github.workspace }} --output_file_prefix output --repo ${{ github.repository }} --commit_hash $COMMIT_HASH --commit_time $TIMESTAMP --commit_message $MESSAGE --branch_name ${{ github.ref_name }} --api_endpoint ${{ inputs.api_endpoint }} 
+        python3 queue_prompt.py --comfy-workflow-names ${{ inputs.workflow_filenames }} --github-action-workflow_name ${{ github.workflow }} --os ${{ runner.os }} --run-id ${{ github.run_id }} --gsc-bucket-name ${{ inputs.gcs_bucket_name }} --workspace-path ${{ github.workspace }} --output-file-prefix output --repo ${{ github.repository }} --commit-hash $COMMIT_HASH --commit-time $TIMESTAMP --commit-message $MESSAGE --branch-name ${{ github.ref_name }} --api-endpoint ${{ inputs.api_endpoint }} 
         
     - name: '[Unix] Debug print out commit timestamp and commit message'
       if: ${{ inputs.os != 'windows' }}
