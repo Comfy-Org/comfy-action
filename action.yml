@@ -128,13 +128,6 @@ runs:
         conda list
       shell: bash -el {0}
 
-    - name: '[Unix] Install dependencies'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        which pip3
-        pip3 install -r requirements.txt
-
     - name: '[Unix] Download models'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
@@ -143,6 +136,13 @@ runs:
         ls "${{ github.workspace }}"
         python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
 
+    - name: '[Unix] Install dependencies'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        which pip3
+        pip3 install -r requirements.txt
+        
     - name: '[Unix] Run Python application in background'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
