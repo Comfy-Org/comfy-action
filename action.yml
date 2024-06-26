@@ -99,9 +99,8 @@ runs:
       with:
         activate-environment: comfyui
         auto-activate-base: false
-        environment: environments/${{ inputs.os }}-environment.yml
+        environment-file: environments/${{ inputs.os }}-environment.yml
         use-only-tar-bz2: true
-        python-version: ${{ inputs.python_version }}  
 
     - name: '[Unix] Install Comfy-CLI'
       if: ${{ inputs.os != 'windows' }}
