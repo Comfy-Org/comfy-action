@@ -50,6 +50,9 @@ inputs:
     description: "Comfy Org API endpoint"
     required: false
     default: "https://api.comfy.org/upload-artifact"
+  conda_env_file:
+    description: "Conda environment file. Path is relative to your repository root."
+    required: true
 runs:
   using: "composite"
   steps:
@@ -104,7 +107,7 @@ runs:
       with:
         activate-environment: comfyui
         auto-activate-base: false
-        environment-file: ${{ github.action_path }}/environments/${{ inputs.os }}-environment.yml
+        environment-file: ${{ inputs.conda_env_file }}
         use-only-tar-bz2: true
 
     - name: '[Unix] Install Comfy-CLI'
