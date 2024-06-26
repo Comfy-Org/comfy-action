@@ -90,10 +90,11 @@ runs:
         auto-activate-base: false
         python-version: ${{ inputs.python_version }}
 
-    - name: '[Unix] Install pip requirements'
+    - name: '[Unix] Install pip requirements for comfy action'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        cd ${{ github.action_path }}
         pip3 install -r requirements.txt
 
     - name: '[Unix] Install Comfy-CLI'
@@ -136,7 +137,6 @@ runs:
     #   run: |
     #     cd ${{ github.action_path }}
     #     ls "${{ github.workspace }}"
-    #     pip3 install -r requirements.txt
     #     python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
 
     # - name: '[Unix] Run Python application in background'
@@ -166,7 +166,7 @@ runs:
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
-        echo "Running workflows: $inputs.workflow_filenames"
+        echo "Running workflows: ${{inputs.workflow_filenames}}"
         python3 queue_prompt.py --comfy_workflow_names $inputs.workflow_filenames --github_action_workflow_name ${{ github.workflow }} --os ${{ runner.os }} --run_id ${{ github.run_id }} --gsc_bucket_name ${{ inputs.gcs_bucket_name }} --workspace_path ${{ github.workspace }} --output_file_prefix output --repo ${{ github.repository }} --commit_hash $COMMIT_HASH --commit_time $TIMESTAMP --commit_message $MESSAGE --branch_name ${{ github.ref_name }} --api_endpoint ${{ inputs.api_endpoint }} 
         
     - name: '[Unix] Debug print out commit timestamp and commit message'
