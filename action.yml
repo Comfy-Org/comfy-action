@@ -86,12 +86,6 @@ runs:
       run: |
         pip install comfy-cli
 
-    - name: '[Unix] Install Comfy'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        comfy install
-
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os != 'windows' }}
@@ -101,6 +95,12 @@ runs:
         activate-environment: comfyui
         auto-activate-base: false
         python-version: ${{ inputs.python_version }}
+
+    - name: '[Unix] Install Comfy'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        comfy install
 
     - name: '[Unix-Mac-Only] Install Pytorch nightly'
       if: ${{ inputs.os == 'macos' }}
