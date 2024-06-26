@@ -1,3 +1,4 @@
 .vscode/settings.json
 cloud_test_key.json
 application.log
+.DS_Store
