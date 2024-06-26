@@ -83,7 +83,14 @@ runs:
       uses: "google-github-actions/auth@v2"
       with:
         credentials_json: "${{ inputs.google_credentials }}"
-    
+
+    - name: Debug environment file path
+      shell: bash -el {0}
+      run: |
+        echo "Environment file path: ${{ github.action_path }}/environments/${{ inputs.os }}-environment.yml"
+        ls ${{ github.action_path }}
+        ls ${{ github.action_path }}/environments
+  
     - name: Cache conda
       uses: actions/cache@v4
       env:
