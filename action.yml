@@ -128,7 +128,13 @@ runs:
       run: |
         cd ${{ github.action_path }}
         pip3 install -r requirements.txt
-
+    
+    - name: Cache models
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/models
+        key: ${{ runner.os }}-models-${{ inputs.models-json }}
+  
     - name: '[Unix] Download models'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
