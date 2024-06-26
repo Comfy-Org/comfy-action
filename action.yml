@@ -93,7 +93,7 @@ runs:
           # Increase this value to reset cache if etc/environment.yml has not changed
           CACHE_NUMBER: 0
       with:
-        path: ~/conda_pkgs_dir
+        path: ~/miniconda3/pkgs
         key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', inputs.conda_env_file)) }}
       
     - name: '[Unix] Setup Conda'
@@ -133,7 +133,7 @@ runs:
       uses: actions/cache@v4
       with:
         path: ${{ github.workspace }}/models
-        key: ${{ runner.os }}-models-${{ inputs.models-json }}
+        key: ${{ runner.os }}-models-${{ hashFiles(format('{0}', inputs.models-json)) }}
   
     - name: '[Unix] Download models'
       if: ${{ inputs.os != 'windows' }}
