@@ -81,11 +81,13 @@ runs:
     ############################################################
 
     - name: '[Unix] Install Comfy-CLI'
+      if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
         pip install comfy-cli
 
     - name: '[Unix] Install Comfy'
+      if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
         comfy install
