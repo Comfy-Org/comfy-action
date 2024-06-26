@@ -21,7 +21,7 @@ inputs:
     description: 'JSON string containing models and their download URLs. The models will be downloaded into the exact directory relative to /ComfyUI/models/. eg { "model_name": { url: "https://example.com/model.pth", "directory": "checkpoints" } }'
     required: false
   workflow_filenames:
-    description: "List of workflows to run. Separate by comma, e.g., 'workflow1,workflow2'. The list of workflows is listed in the workflows/ directory."
+    description: "The list of workflow filenames is listed in the workflows/ directory. Separate by comma, e.g., 'workflow1.json,workflow2.json'."
     required: true
   comfyui_flags:
     description: "Flags to pass to the comfyui application. eg. --force-fp16"
@@ -79,28 +79,39 @@ runs:
     ##  |   -----------     ::: |         `-'       `--'      ##
     ##  `-----------------------'                             ##
     ############################################################
-
+    - name: 'Auth to GCS'
+      uses: "google-github-actions/auth@v2"
+      with:
+        credentials_json: "${{ inputs.google_credentials }}"
+    
+    - name: Cache conda
+      uses: actions/cache@v4
+      env:
+          # Increase this value to reset cache if etc/environment.yml has not changed
+          CACHE_NUMBER: 0
+      with:
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('environments/{0}-environment.yml', inputs.os)) }}
+      
     - name: '[Unix] Setup Conda'
-      uses: conda-incubator/setup-miniconda@v3.0.3
+      uses: conda-incubator/setup-miniconda@v3
       if: ${{ inputs.os != 'windows' }}
       with:
-        auto-update-conda: true
-        miniconda-version: latest
         activate-environment: comfyui
         auto-activate-base: false
-        python-version: ${{ inputs.python_version }}
+        environment: environments/${{ inputs.os }}-environment.yml
+        use-only-tar-bz2: true
+        python-version: ${{ inputs.python_version }}  
 
-    - name: '[Unix-Mac-Only] Install Pytorch nightly'
-      if: ${{ inputs.os == 'macos' }}
+    - name: '[Unix] Install Comfy-CLI'
+      if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        conda install pytorch torchvision torchaudio -c pytorch-nightly
-
-    - name: '[Unix-Liux-Only] Install Pytorch'
-      if: ${{ inputs.os == 'linux' }}
-      shell: bash -el {0}
-      run: |
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
+        which pip
+        which pip3
+        pip3 install comfy-cli
+        comfy --version
+        comfy --skip-prompt --no-enable-telemetry env
 
     - name: '[Unix] Check conda environment'
       if: ${{ inputs.os != 'windows' }}
@@ -109,34 +120,32 @@ runs:
         conda list
       shell: bash -el {0}
 
+    - name: '[Unix] Install pip requirements for comfy action'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        cd ${{ github.action_path }}
+        pip3 install -r requirements.txt
+
+    - name: '[Unix] Download models'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        cd ${{ github.action_path }}
+        python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
+
     - name: '[Unix] Install dependencies'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
         which pip3
         pip3 install -r requirements.txt
-
-    - name: '[Unix] Download model'
+        
+    - name: '[Unix] Run Python application in background'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        cd ${{ github.action_path }}
-        ls "${{ github.workspace }}"
-        # python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
-        cp "${HOME}/v1-5-pruned-emaonly.ckpt" "${{ github.workspace }}/models/checkpoints/"
-        cp "${HOME}/epiNoiseoffset_v2.safetensors" "${{ github.workspace }}/models/loras/"
-
-    - name: '[Unix] Run Python application quick test'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        python main.py --quick-test-for-ci
-
-    - name: '[Unix] Run Python application'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        python3 main.py --force-fp16 > application.log 2>&1 &
+        python3 main.py > application.log 2>&1 &
 
     - name: '[Unix] Check if the server is running'
       if: ${{ inputs.os != 'windows' }}
@@ -166,26 +175,8 @@ runs:
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
-        FULL_PATH="${GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
-        echo "Full path to the JSON file: $FULL_PATH"
-        PROMPT_ID=$(python3 queue_prompt.py "$FULL_PATH" 2>&1)
-        echo "prompt_id=$PROMPT_ID" >> $GITHUB_OUTPUT
-        echo "Script output: "
-        echo "$PROMPT_ID"
-
-    - name: '[Unix] Auth to GCS'
-      uses: "google-github-actions/auth@v2"
-      if: ${{ inputs.os != 'windows' }}
-      with:
-        credentials_json: "${{ inputs.google_credentials }}"
-
-    - name: '[Unix] Upload log file to GCS'
-      if: ${{ ( success() || failure() ) && inputs.os != 'windows' }}
-      id: unix_upload-log-files
-      uses: google-github-actions/upload-cloud-storage@v2
-      with:
-        path: ${{ github.workspace }}/application.log
-        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+        echo "Running workflows: ${{inputs.workflow_filenames}}"
+        python3 queue_prompt.py --comfy-workflow-names ${{ inputs.workflow_filenames }} --github-action-workflow-name "${{ github.workflow }}" --os "${{ inputs.os }}" --run-id "${{ github.run_id }}" --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" --workspace-path "${{ github.workspace }}" --output-file-prefix ${{ inputs.output_prefix }} --repo "${{ github.repository }}" --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" --branch-name "${{ github.ref_name }}" --api-endpoint "${{ inputs.api_endpoint }}" 
         
     - name: '[Unix] Debug print out commit timestamp and commit message'
       if: ${{ inputs.os != 'windows' }}
