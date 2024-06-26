@@ -51,7 +51,7 @@ inputs:
     required: false
     default: "https://api.comfy.org/upload-artifact"
   conda_env_file:
-    description: "Conda environment file. Path is relative to your repository root."
+    description: "Conda environment file. Path is relative to your repository root. The environment name must be comfyui."
     required: true
 runs:
   using: "composite"
@@ -86,11 +86,6 @@ runs:
       uses: "google-github-actions/auth@v2"
       with:
         credentials_json: "${{ inputs.google_credentials }}"
-
-    - name: Debug environment file path
-      shell: bash -el {0}
-      run: |
-        ls ${{ github.action_path }}/environments/linux-environment.yml
   
     - name: Cache conda
       uses: actions/cache@v4
@@ -99,7 +94,7 @@ runs:
           CACHE_NUMBER: 0
       with:
         path: ~/conda_pkgs_dir
-        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('environments/{0}-environment.yml', inputs.os)) }}
+        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', inputs.conda_env_file)) }}
       
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3
@@ -184,12 +179,6 @@ runs:
         cd ${{ github.action_path }}
         echo "Running workflows: ${{inputs.workflow_filenames}}"
         python3 queue_prompt.py --comfy-workflow-names ${{ inputs.workflow_filenames }} --github-action-workflow-name "${{ github.workflow }}" --os "${{ inputs.os }}" --run-id "${{ github.run_id }}" --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" --workspace-path "${{ github.workspace }}" --output-file-prefix ${{ inputs.output_prefix }} --repo "${{ github.repository }}" --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" --branch-name "${{ github.ref_name }}" --api-endpoint "${{ inputs.api_endpoint }}" 
-        
-    - name: '[Unix] Debug print out commit timestamp and commit message'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        echo "Event: ${{ github.event }}"
 
     - name: '[Unix] Upload log file'
       uses: actions/upload-artifact@v4
