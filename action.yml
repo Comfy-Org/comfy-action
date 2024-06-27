@@ -105,29 +105,12 @@ runs:
         environment-file: ${{ inputs.conda_env_file }}
         use-only-tar-bz2: true
 
-    - name: '[Unix] Install Comfy-CLI'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        which pip
-        which pip3
-        pip3 install comfy-cli
-        comfy --version
-        comfy --skip-prompt --no-enable-telemetry env
-
     - name: '[Unix] Check conda environment'
       if: ${{ inputs.os != 'windows' }}
       run: |
         conda info
         conda list
       shell: bash -el {0}
-
-    - name: '[Unix] Install pip requirements for comfy action'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        cd ${{ github.action_path }}
-        pip3 install -r requirements.txt
     
     - name: Generate hash from models-json
       id: generate_hash
@@ -147,13 +130,6 @@ runs:
       run: |
         cd ${{ github.action_path }}
         python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
-
-    - name: '[Unix] Install dependencies'
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
-        which pip3
-        pip3 install -r requirements.txt
         
     - name: '[Unix] Run Python application in background'
       if: ${{ inputs.os != 'windows' }}
