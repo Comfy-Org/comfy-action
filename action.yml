@@ -215,6 +215,7 @@ runs:
       shell: powershell
       run: |
         conda env create -f ${{ inputs.conda_env_file }}
+        conda activate comfyui
 
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
@@ -228,7 +229,7 @@ runs:
       id: generate_hash_windows
       run: |
         Set-Location ${{ env.GITHUB_ACTION_PATH }}
-        $hash = python hash_string.py '${{ inputs.models-json }}'
+        $hash = python3 hash_string.py '${{ inputs.models-json }}'
         echo "##[set-output name=hash;]$hash"
       shell: powershell
 
