@@ -19,7 +19,7 @@ def main(json_string):
     hash_hex = hash_object.hexdigest()
 
     # Output the hash
-    print(f"hash={hash_hex}")
+    print(hash_hex)
 
 
 if __name__ == "__main__":
