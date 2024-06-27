@@ -237,27 +237,35 @@ runs:
       shell: powershell
 
     - name: Generate hash from models-json
+      if: ${{ inputs.os == 'windows' }}
       id: generate_hash_windows
       run: |
         $hash = (Get-FileHash -Algorithm SHA256 -InputStream ([System.IO.MemoryStream][System.Text.Encoding]::UTF8.GetBytes("${{ inputs.models-json }}"))).Hash
-        echo "::set-output name=hash::$hash"
+        echo "hash=$hash" >> $GITHUB_OUTPUT
       shell: powershell
-  
+
+    - name: '[Windows] Cache models'
+      if: ${{ inputs.os == 'windows' }}
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/models
+        key: ${{ runner.os }}-models-${{ steps.generate_hash_windows.outputs.hash }}
 
     # Keep in mind the self runner must be setup with a model in C:\actions-runner\
-    - name: '[Win] Download models'
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        cd $Env:GITHUB_ACTION_PATH
-        ls "$Env:GITHUB_WORKSPACE"
-        cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
-      shell: powershell
+    # - name: '[Win] Download models'
+    #   if: ${{ inputs.os == 'windows' }}
+    #   run: |
+    #     cd $Env:GITHUB_ACTION_PATH
+    #     ls "$Env:GITHUB_WORKSPACE"
+    #     cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
+    #   shell: powershell
 
-    - name: '[Win] Run Python application quick test'
+    - name: '[Windows] Download models'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
+        Set-Location ${{ env.GITHUB_ACTION_PATH }}
+        python download-models.py raw "${{ inputs.models-json }}" "${{ env.GITHUB_WORKSPACE }}\models\"
 
     - name: '[Win] Run Python application'
       if: ${{ inputs.os == 'windows' }}
@@ -276,76 +284,6 @@ runs:
         python poll_server_start.py
       shell: powershell
 
-    - name: '[Win] Queue Prompt'
-      id: win_queue_prompt
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        cd $Env:GITHUB_ACTION_PATH
-        $FULL_PATH="${Env:GITHUB_WORKSPACE}/${{ inputs.workflow_json_path }}"
-        Write-Output "Full path to the JSON file: $FULL_PATH"
-        $PROMPT_ID = python queue_prompt.py "$FULL_PATH"
-        Write-Output "prompt_id=$PROMPT_ID" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "Script output: "
-        Write-Output "$PROMPT_ID"
-
-    - name: '[Win] Get start time'
-      id: win_start_time
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        $currentTime = [int][double]::Parse((Get-Date -UFormat "%s"))
-        Write-Output "start_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "Start time: "
-        Write-Output "$currentTime"
-      shell: powershell
-
-    - name: '[Win] Check Prompt Status and Get Output Files'
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        cd $Env:GITHUB_ACTION_PATH
-        Write-Output "Prompt ID: ${{ steps.win_queue_prompt.outputs.prompt_id }}"
-        python check_prompt_status.py ${{ steps.win_queue_prompt.outputs.prompt_id }} http://localhost:8188/history ${{ inputs.timeout }}
-
-    - name: '[Win] Get end time'
-      id: win_end_tim
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        $currentTime = [int][double]::Parse((Get-Date -UFormat "%s"))
-        Write-Output "end_time=$currentTime" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "End time: "
-        Write-Output "$currentTime"
-      shell: powershell
-
-    - name: '[Win] Auth to GCS'
-      uses: "google-github-actions/auth@v2"
-      if: ${{ inputs.os == 'windows' }}
-      with:
-        credentials_json: "${{ inputs.google_credentials }}"
-
-    - name: '[Win] Upload Output Files to GCS'
-      if: ${{ success() && inputs.os == 'windows'}}
-      id: win_upload-output-files
-      uses: google-github-actions/upload-cloud-storage@v2
-      with:
-        path: ${{ github.workspace }}/output
-        destination: ${{ inputs.gcs_bucket_name }}/output-files/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
-        glob: "${{ inputs.output_prefix }}*"
-
-    - name: '[Win] Upload log file to GCS'
-      if: ${{ ( success() || failure() ) && inputs.os == 'windows'}}
-      id: win_upload-log-files
-      uses: google-github-actions/upload-cloud-storage@v2
-      with:
-        path: ${{ github.workspace }}/application.log
-        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
-
-    - name: '[Win] Debug print out commit timestamp and commit message'
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        Write-Output "Event : ${{ github.event }}"
-
     - name: '[Win] Get Commit Details'
       id: win_get_commit_details
       if: ${{ inputs.os == 'windows' }}
@@ -354,40 +292,31 @@ runs:
         $timestamp = git show -s --format=%cI HEAD^
         $message = git show -s --format=%s HEAD^
         $commit_hash = git rev-parse HEAD^
-        Write-Output "Commit time: $timestamp"
-        Write-Output "Commit title: $message"
-        Write-Output "Commit hash: $commit_hash"
-        Write-Output "commit_time=$timestamp" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
-        Write-Output "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        "commit_time=$timestamp" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
+        "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
 
-    - name: '[Win] Call API to upload artifact details'
-      if: ${{ inputs.os == 'windows' && success() }}
+    - name: '[Windows] Queue Prompts'
+      id: windows_queue_prompt
+      if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        $response = Invoke-WebRequest -Uri "${{ inputs.api_endpoint}}" `
-          -Method POST `
-          -Headers @{"Content-Type"="application/json"} `
-          -Body (@{
-            "repo" = "${{ github.repository }}"
-            "run_id" = "${{ github.run_id }}"
-            "os" = "${{ inputs.os }}"
-            "cuda_version" = "${{ inputs.cuda_version }}"
-            "output_files_gcs_paths" = "${{ steps.win_upload-output-files.outputs.uploaded }}"
-            "commit_hash" = "${{ steps.win_get_commit_details.outputs.commit_hash }}"
-            "commit_time" = "${{ steps.win_get_commit_details.outputs.commit_time }}"
-            "commit_message" = "${{ steps.win_get_commit_details.outputs.commit_title }}"
-            "branch_name" = "${{ github.ref_name }}"
-            "bucket_name" = "${{ inputs.gcs_bucket_name }}"
-            "workflow_name" = "${{ inputs.workflow_name }}"
-            "start_time" = ${{ steps.win_start_time.outputs.start_time }}
-            "end_time" = ${{ steps.win_end_time.outputs.end_time }}
-          } | ConvertTo-Json)
-
-        if ($response.StatusCode -ne 200) {
-            Write-Error "API request failed with status code $($response.StatusCode)"
-            exit 1
-        }
+        Set-Location ${{ env.GITHUB_ACTION_PATH }}
+        Write-Host "Running workflows: ${{ inputs.workflow_filenames }}"
+        python queue_prompt.py `
+          --comfy-workflow-names "${{ inputs.workflow_filenames }}" `
+          --github-action-workflow-name "${{ github.workflow }}" `
+          --os "${{ inputs.os }}" `
+          --run-id "${{ github.run_id }}" `
+          --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" `
+          --workspace-path "${{ github.workspace }}" `
+          --output-file-prefix "${{ inputs.output_prefix }}" `
+          --repo "${{ github.repository }}" `
+          --commit-hash "${{ steps.win_get_commit_details.outputs.commit_hash }}" `
+          --commit-time "${{ steps.win_get_commit_details.outputs.commit_time }}" `
+          --commit-message "${{ steps.win_get_commit_details.outputs.commit_title }}" `
+          --branch-name "${{ github.ref_name }}" `
+          --api-endpoint "${{ inputs.api_endpoint }}"
 
     - name: '[Win] Upload Output Files'
       uses: actions/upload-artifact@v4
@@ -402,8 +331,3 @@ runs:
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
-
-    - name: '[Win] Cleanup output files only'
-      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
-      shell: powershell
-      run: Remove-Item -Path "${{ github.workspace }}/output/*" -Recurse -Force
