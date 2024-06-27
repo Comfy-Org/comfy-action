@@ -87,10 +87,11 @@ runs:
       with:
         credentials_json: "${{ inputs.google_credentials }}"
   
-    - name: Cache conda
+    - name: '[Unix] Cache Conda'
+      if: ${{ inputs.os != 'windows' }}
       uses: actions/cache@v4
       env:
-          # Increase this value to reset cache if etc/environment.yml has not changed
+          # Increase this value to reset cache if the environment file has not changed
           CACHE_NUMBER: 0
       with:
         path: ~/miniconda3/envs/comfyui
@@ -209,21 +210,24 @@ runs:
     ##                                                                                 ##
     #####################################################################################
 
+    - name: '[Windows] Cache Conda'
+      if: ${{ inputs.os != 'windows' }}
+      uses: actions/cache@v4
+      env:
+          # Increase this value to reset cache if the environment file has not changed
+          CACHE_NUMBER: 0
+      with:
+        path: C:\Miniconda3\envs\comfyui
+        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', inputs.conda_env_file)) }}
+
     - name: '[Win] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os == 'windows' }}
       with:
-        auto-update-conda: true
-        miniconda-version: latest
         activate-environment: comfyui
-        python-version: ${{ inputs.python_version }}
-      continue-on-error: true
-
-    - name: '[Win-Only] Install Pytorch'
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia --yes
+        auto-activate-base: false
+        environment-file: ${{ inputs.conda_env_file }}
+        use-only-tar-bz2: true
 
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
@@ -232,12 +236,7 @@ runs:
         conda list
       shell: powershell
 
-    - name: '[Win] Install dependencies'
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
-        Get-Command pip
-        pip install -r requirements.txt
+    
 
     # Keep in mind the self runner must be setup with a model in C:\actions-runner\
     - name: '[Win] Download models'
