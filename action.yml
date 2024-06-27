@@ -347,3 +347,8 @@ runs:
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
+    
+    - name: '[Win] Cleanup output files only'
+      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
+      shell: powershell
+      run: Remove-Item -Path "${{ github.workspace }}/output/*" -Recurse -Force
