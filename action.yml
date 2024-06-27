@@ -243,10 +243,20 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       id: generate_hash_windows
       run: |
-        $jsonString = '{"v1-5-pruned-emaonly.ckpt": {"url": "https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt", "directory": "checkpoints"}}'
+        # Escape the JSON string from the GitHub Actions input
+        $jsonString = "${{ inputs.models-json }}"
+        $jsonString = $jsonString -replace '"', '\"'
+        
+        # Convert the JSON string to bytes
         $bytes = [System.Text.Encoding]::UTF8.GetBytes($jsonString)
+        
+        # Create a memory stream from the bytes
         $stream = [System.IO.MemoryStream]::new($bytes)
+        
+        # Calculate the SHA256 hash of the data in the memory stream
         $hash = (Get-FileHash -Algorithm SHA256 -InputStream $stream).Hash
+        
+        # Output the hash to the GitHub Actions environment
         echo "hash=$hash" >> $GITHUB_OUTPUT
       shell: powershell
 
