@@ -236,7 +236,13 @@ runs:
         conda list
       shell: powershell
 
-    
+    - name: Generate hash from models-json
+      id: generate_hash_windows
+      run: |
+        $hash = (Get-FileHash -Algorithm SHA256 -InputStream ([System.IO.MemoryStream][System.Text.Encoding]::UTF8.GetBytes("${{ inputs.models-json }}"))).Hash
+        echo "::set-output name=hash::$hash"
+      shell: powershell
+  
 
     # Keep in mind the self runner must be setup with a model in C:\actions-runner\
     - name: '[Win] Download models'
