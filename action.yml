@@ -227,7 +227,7 @@ runs:
         activate-environment: comfyui
         auto-activate-base: false
         auto-update-conda: true
-        miniconda-version: 24.5.0
+        miniconda-version: "Miniconda3-py312_24.4.0-0-Windows-x86_64.exe"
         environment-file: ${{ inputs.conda_env_file }}
         use-only-tar-bz2: true
 
