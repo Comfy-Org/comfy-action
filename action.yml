@@ -225,10 +225,9 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       with:
         auto-update-conda: true
-        miniconda-version: latest
+        miniconda-version: "latest"
         activate-environment: comfyui
         auto-activate-base: false
-        environment-file: ${{ inputs.conda_env_file }}
         use-only-tar-bz2: true
       continue-on-error: true
 
@@ -242,12 +241,7 @@ runs:
     - name: Generate hash from models-json
       if: ${{ inputs.os == 'windows' }}
       id: generate_hash_windows
-      run: |
-        $jsonString = @'${{ inputs.models-json }}'@
-        $bytes = [System.Text.Encoding]::UTF8.GetBytes($jsonString)
-        $stream = [System.IO.MemoryStream]::new($bytes)
-        $hash = (Get-FileHash -Algorithm SHA256 -InputStream $stream).Hash
-        echo "hash=$hash" >> $env:GITHUB_OUTPUT
+      run: python hash_string.py '${{ inputs.models-json }}'
       shell: powershell
 
 
