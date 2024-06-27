@@ -226,7 +226,8 @@ runs:
       with:
         activate-environment: comfyui
         auto-activate-base: false
-        miniconda-version: "latest"
+        auto-update-conda: true
+        miniconda-version: latest
         environment-file: ${{ inputs.conda_env_file }}
         use-only-tar-bz2: true
 
