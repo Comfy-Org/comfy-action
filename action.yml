@@ -210,26 +210,11 @@ runs:
     ##                                                                                 ##
     #####################################################################################
 
-    - name: '[Windows] Cache Conda'
-      if: ${{ inputs.os != 'windows' }}
-      uses: actions/cache@v4
-      env:
-          # Increase this value to reset cache if the environment file has not changed
-          CACHE_NUMBER: 0
-      with:
-        path: C:\Miniconda3\envs\comfyui
-        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', inputs.conda_env_file)) }}
-
-    - name: '[Win] Setup Conda'
-      uses: conda-incubator/setup-miniconda@v3
+    - name: '[Win-Only] Install Pytorch'
       if: ${{ inputs.os == 'windows' }}
-      with:
-        auto-update-conda: false
-        activate-environment: comfyui
-        auto-activate-base: false
-        environment-file: ${{ inputs.conda_env_file }}
-        use-only-tar-bz2: true
-      continue-on-error: true
+      shell: powershell
+      run: |
+        conda env create -f ${{ inputs.conda_env_file }}
 
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
