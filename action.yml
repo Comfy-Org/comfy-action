@@ -112,13 +112,15 @@ runs:
         conda list
       shell: bash -el {0}
     
-    - name: Generate hash from models-json
+    - name: '[Unix] Generate hash from models-json'
+      if: ${{ inputs.os != 'windows' }}
       id: generate_hash
       run: |
-        echo "::set-output name=hash::$(echo '${{ inputs.models-json }}' | sha256sum | cut -d ' ' -f1)"
+        echo "hash=$(echo '${{ inputs.models-json }}' | sha256sum | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
       shell: bash
 
-    - name: Cache models
+    - name: '[Unix] Cache models'
+      if: ${{ inputs.os != 'windows' }}
       uses: actions/cache@v4
       with:
         path: ${{ github.workspace }}/models
