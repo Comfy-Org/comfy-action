@@ -243,22 +243,13 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       id: generate_hash_windows
       run: |
-        # Escape the JSON string from the GitHub Actions input
-        $jsonString = "${{ inputs.models-json }}"
-        $jsonString = $jsonString -replace '"', '\"'
-        
-        # Convert the JSON string to bytes
+        $jsonString = @'${{ inputs.models-json }}'@
         $bytes = [System.Text.Encoding]::UTF8.GetBytes($jsonString)
-        
-        # Create a memory stream from the bytes
         $stream = [System.IO.MemoryStream]::new($bytes)
-        
-        # Calculate the SHA256 hash of the data in the memory stream
         $hash = (Get-FileHash -Algorithm SHA256 -InputStream $stream).Hash
-        
-        # Output the hash to the GitHub Actions environment
-        echo "hash=$hash" >> $GITHUB_OUTPUT
+        echo "hash=$hash" >> $env:GITHUB_OUTPUT
       shell: powershell
+
 
     - name: '[Windows] Cache models'
       if: ${{ inputs.os == 'windows' }}
