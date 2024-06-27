@@ -243,7 +243,10 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       id: generate_hash_windows
       run: |
-        $hash = (Get-FileHash -Algorithm SHA256 -InputStream ([System.IO.MemoryStream][System.Text.Encoding]::UTF8.GetBytes("${{ inputs.models-json }}"))).Hash
+        $jsonString = '{"v1-5-pruned-emaonly.ckpt": {"url": "https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt", "directory": "checkpoints"}}'
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($jsonString)
+        $stream = [System.IO.MemoryStream]::new($bytes)
+        $hash = (Get-FileHash -Algorithm SHA256 -InputStream $stream).Hash
         echo "hash=$hash" >> $GITHUB_OUTPUT
       shell: powershell
 
