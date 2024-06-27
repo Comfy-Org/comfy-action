@@ -221,7 +221,7 @@ runs:
         key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', inputs.conda_env_file)) }}
 
     - name: '[Win] Setup Conda'
-      uses: conda-incubator/setup-miniconda@v3.0.3
+      uses: conda-incubator/setup-miniconda@v3
       if: ${{ inputs.os == 'windows' }}
       with:
         activate-environment: comfyui
