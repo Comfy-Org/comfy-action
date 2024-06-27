@@ -224,10 +224,10 @@ runs:
       uses: conda-incubator/setup-miniconda@v3
       if: ${{ inputs.os == 'windows' }}
       with:
-        auto-update-conda: true
-        miniconda-version: "latest"
+        auto-update-conda: false
         activate-environment: comfyui
         auto-activate-base: false
+        environment-file: ${{ inputs.conda_env_file }}
         use-only-tar-bz2: true
       continue-on-error: true
 
