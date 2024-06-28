@@ -228,10 +228,12 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       id: generate_hash_windows
       run: |
+        Set-Location $Env:GITHUB_ACTION_PATH
         conda activate comfyui
-        Set-Location ${{ env.GITHUB_ACTION_PATH }}
-        $hash = python hash_string.py '${{ inputs.models-json }}'
-        echo "##[set-output name=hash;]$hash"
+        ls
+        python hash_string.py '${{ inputs.models-json }}' > hash_output.txt
+        $hash = Get-Content hash_output.txt
+        echo "hash=$hash" >> $Env:GITHUB_ENV
       shell: powershell
 
 
@@ -256,6 +258,7 @@ runs:
       shell: powershell
       run: |
         Set-Location ${{ env.GITHUB_ACTION_PATH }}
+        ls
         conda activate comfyui
         python download-models.py raw "${{ inputs.models-json }}" "${{ env.GITHUB_WORKSPACE }}\models\"
 
