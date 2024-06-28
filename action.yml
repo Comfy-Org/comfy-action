@@ -231,8 +231,10 @@ runs:
         Set-Location $Env:GITHUB_ACTION_PATH
         conda activate comfyui
         ls
+        Write-Host "Running hash_string.py..."
         python hash_string.py '${{ inputs.models-json }}' > hash_output.txt
         $hash = Get-Content hash_output.txt
+        Write-Host "Hash value: $hash"
         echo "hash=$hash" >> $Env:GITHUB_ENV
       shell: powershell
 
