@@ -263,9 +263,10 @@ runs:
         ls
         conda activate comfyui
         $jsonInput = '${{ inputs.models-json }}'
+        $jsonInputEscaped = $jsonInput -replace '"', '\"'
         $outputDir = "$Env:GITHUB_WORKSPACE\models\"
-        Write-Host "Running download-models.py with input: $jsonInput and output directory: $outputDir"
-        python download-models.py raw "$jsonInput" "$outputDir"
+        Write-Host "Running download-models.py with input: $jsonInputEscaped and output directory: $outputDir"
+        python download-models.py raw "$jsonInputEscaped" "$outputDir"
 
     - name: '[Win] Run Python application'
       if: ${{ inputs.os == 'windows' }}
