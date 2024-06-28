@@ -262,7 +262,10 @@ runs:
         Set-Location $Env:GITHUB_ACTION_PATH
         ls
         conda activate comfyui
-        python download-models.py raw "${{ inputs.models-json }}" "$Env:GITHUB_WORKSPACE\models\"
+        $jsonInput = '${{ inputs.models-json }}'
+        $outputDir = "$Env:GITHUB_WORKSPACE\models\"
+        Write-Host "Running download-models.py with input: $jsonInput and output directory: $outputDir"
+        python download-models.py raw "$jsonInput" "$outputDir"
 
     - name: '[Win] Run Python application'
       if: ${{ inputs.os == 'windows' }}
