@@ -4,13 +4,6 @@ import json
 
 
 def main(json_string):
-    # Ensure the JSON string is valid
-    try:
-        json_data = json.loads(json_string)
-    except json.JSONDecodeError:
-        print("Invalid JSON string")
-        sys.exit(1)
-
     # Convert JSON string to bytes
     json_bytes = json_string.encode("utf-8")
 
