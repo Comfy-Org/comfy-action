@@ -215,7 +215,6 @@ runs:
       shell: powershell
       run: |
         conda env create -f ${{ inputs.conda_env_file }}
-        conda activate comfyui
 
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
@@ -228,6 +227,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       id: generate_hash_windows
       run: |
+        conda activate comfyui
         Set-Location ${{ env.GITHUB_ACTION_PATH }}
         $hash = python3 hash_string.py '${{ inputs.models-json }}'
         echo "##[set-output name=hash;]$hash"
@@ -255,6 +255,7 @@ runs:
       shell: powershell
       run: |
         Set-Location ${{ env.GITHUB_ACTION_PATH }}
+        conda activate comfyui
         python download-models.py raw "${{ inputs.models-json }}" "${{ env.GITHUB_WORKSPACE }}\models\"
 
     - name: '[Win] Run Python application'
@@ -271,6 +272,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       run: |
         cd $Env:GITHUB_ACTION_PATH
+        conda activate comfyui
         python poll_server_start.py
       shell: powershell
 
@@ -292,6 +294,7 @@ runs:
       shell: powershell
       run: |
         Set-Location ${{ env.GITHUB_ACTION_PATH }}
+        conda activate comfyui
         Write-Host "Running workflows: ${{ inputs.workflow_filenames }}"
         python queue_prompt.py `
           --comfy-workflow-names "${{ inputs.workflow_filenames }}" `
