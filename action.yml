@@ -126,6 +126,7 @@ runs:
       with:
         path: ${{ github.workspace }}/models
         key: ${{ runner.os }}-models-${{ steps.generate_hash.outputs.hash }}
+        save-always: true
   
     - name: '[Unix] Download models'
       if: ${{ inputs.os != 'windows' }}
@@ -245,6 +246,7 @@ runs:
       with:
         path: ${{ github.workspace }}/models
         key: ${{ runner.os }}-models-${{ steps.generate_hash_windows.outputs.hash }}
+        save-always: true
 
     # Keep in mind the self runner must be setup with a model in C:\actions-runner\
     # - name: '[Win] Download models'
@@ -303,7 +305,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        Set-Location ${{ env.GITHUB_ACTION_PATH }}
+        cd $Env:GITHUB_ACTION_PATH
         conda activate comfyui
         Write-Host "Running workflows: ${{ inputs.workflow_filenames }}"
         python queue_prompt.py `
