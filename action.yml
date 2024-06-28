@@ -225,7 +225,7 @@ runs:
         conda list
       shell: powershell
 
-    - name: Generate hash from models-json
+    - name: '[Win] Generate hash from models-json'
       if: ${{ inputs.os == 'windows' }}
       id: generate_hash_windows
       run: |
