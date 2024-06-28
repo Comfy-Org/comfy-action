@@ -214,7 +214,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        conda env create -f ${{ inputs.conda_env_file }}
+        conda env update -f ${{ inputs.conda_env_file }}
 
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
