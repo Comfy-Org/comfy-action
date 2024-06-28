@@ -259,7 +259,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        Set-Location ${{ env.GITHUB_ACTION_PATH }}
+        Set-Location $Env:GITHUB_ACTION_PATH
         ls
         conda activate comfyui
         python download-models.py raw "${{ inputs.models-json }}" "${{ env.GITHUB_WORKSPACE }}\models\"
