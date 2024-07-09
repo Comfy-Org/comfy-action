@@ -10,17 +10,10 @@ This is meant to be run in the ComfyUI repository.
 
 [] Have option to compare results with previous runs.
 
-### Set up MacOS Runners
+### Set up your local self-hosted runner
 
-Make sure Homebrew is on the path for bash. This is needed for tmate-action, which can be helpful during debugging.
+### Modify the script to run your workflow
 
-`nano ~/.bash_profile`
+### Test running the workflow
 
-```
-export HOMEBREW_PREFIX="/opt/homebrew";
-export HOMEBREW_CELLAR="/opt/homebrew/Cellar";
-export HOMEBREW_REPOSITORY="/opt/homebrew";
-export PATH="/opt/homebrew/bin:/opt/homebrew/sbin${PATH+:$PATH}";
-export MANPATH="/opt/homebrew/share/man${MANPATH+:$MANPATH}:";
-export INFOPATH="/opt/homebrew/share/info:${INFOPATH:-}";
-```
+### Make sure to verify using action_yaml_checker.py

@@ -82,21 +82,11 @@ runs:
     ##  |   -----------     ::: |         `-'       `--'      ##
     ##  `-----------------------'                             ##
     ############################################################
-    - name: 'Auth to GCS'
+    - name: '[Unix] Auth to GCS'
       uses: "google-github-actions/auth@v2"
       with:
         credentials_json: "${{ inputs.google_credentials }}"
   
-    - name: '[Unix] Cache Conda'
-      if: ${{ inputs.os != 'windows' }}
-      uses: actions/cache@v4
-      env:
-          # Increase this value to reset cache if the environment file has not changed
-          CACHE_NUMBER: 0
-      with:
-        path: ~/miniconda3/envs/comfyui
-        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles(format('{0}', inputs.conda_env_file)) }}
-      
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3
       if: ${{ inputs.os != 'windows' }}
@@ -139,7 +129,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        python3 main.py > application.log 2>&1 &
+        comfy launch -- --force-fp16 > application.log 2>&1 &
 
     - name: '[Unix] Check if the server is running'
       if: ${{ inputs.os != 'windows' }}
@@ -164,13 +154,13 @@ runs:
         echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
     - name: '[Unix] Queue Prompts'
-      id: unix_queue_prompt
+      id: unix_action
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
         echo "Running workflows: ${{inputs.workflow_filenames}}"
-        python3 queue_prompt.py --comfy-workflow-names ${{ inputs.workflow_filenames }} --github-action-workflow-name "${{ github.workflow }}" --os "${{ inputs.os }}" --run-id "${{ github.run_id }}" --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" --workspace-path "${{ github.workspace }}" --output-file-prefix ${{ inputs.output_prefix }} --repo "${{ github.repository }}" --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" --branch-name "${{ github.ref_name }}" --api-endpoint "${{ inputs.api_endpoint }}" 
+        python3 action.py --comfy-workflow-names ${{ inputs.workflow_filenames }} --github-action-workflow-name "${{ github.workflow }}" --os "${{ inputs.os }}" --run-id "${{ github.run_id }}" --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" --workspace-path "${{ github.workspace }}" --output-file-prefix ${{ inputs.output_prefix }} --repo "${{ github.repository }}" --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" --branch-name "${{ github.ref_name }}" --api-endpoint "${{ inputs.api_endpoint }}" 
 
     - name: '[Unix] Upload log file'
       if: ${{ inputs.os != 'windows' }}
@@ -210,8 +200,13 @@ runs:
     ##                                                                                 ##
     ##                                                                                 ##
     #####################################################################################
+  
+    - name: '[Win] Auth to GCS'
+      uses: "google-github-actions/auth@v2"
+      with:
+        credentials_json: "${{ inputs.google_credentials }}"
 
-    - name: '[Win-Only] Install Pytorch'
+    - name: '[Win-Only] Install Conda Env'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
@@ -225,50 +220,50 @@ runs:
         conda list
       shell: powershell
 
-    - name: '[Win] Generate hash from models-json'
-      if: ${{ inputs.os == 'windows' }}
-      id: generate_hash_windows
-      run: |
-        Set-Location $Env:GITHUB_ACTION_PATH
-        conda activate comfyui
-        ls
-        Write-Host "Running hash_string.py..."
-        python hash_string.py '${{ inputs.models-json }}' > hash_output.txt
-        $hash = Get-Content hash_output.txt
-        Write-Host "Hash value: $hash"
-        echo "hash=$hash" >> $Env:GITHUB_ENV
-      shell: powershell
-
-
-    - name: '[Windows] Cache models'
-      if: ${{ inputs.os == 'windows' }}
-      uses: actions/cache@v4
-      with:
-        path: ${{ github.workspace }}/models
-        key: ${{ runner.os }}-models-${{ steps.generate_hash_windows.outputs.hash }}
-        save-always: true
-
-    # Keep in mind the self runner must be setup with a model in C:\actions-runner\
-    # - name: '[Win] Download models'
+    # - name: '[Win] Generate hash from models-json'
     #   if: ${{ inputs.os == 'windows' }}
+    #   id: generate_hash_windows
     #   run: |
-    #     cd $Env:GITHUB_ACTION_PATH
-    #     ls "$Env:GITHUB_WORKSPACE"
-    #     cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
+    #     Set-Location $Env:GITHUB_ACTION_PATH
+    #     conda activate comfyui
+    #     ls
+    #     Write-Host "Running hash_string.py..."
+    #     python hash_string.py '${{ inputs.models-json }}' > hash_output.txt
+    #     $hash = Get-Content hash_output.txt
+    #     Write-Host "Hash value: $hash"
+    #     echo "hash=$hash" >> $Env:GITHUB_ENV
     #   shell: powershell
 
-    - name: '[Windows] Download models'
+
+    # - name: '[Windows] Cache models'
+    #   if: ${{ inputs.os == 'windows' }}
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: ${{ github.workspace }}/models
+    #     key: ${{ runner.os }}-models-${{ steps.generate_hash_windows.outputs.hash }}
+    #     save-always: true
+
+    # Keep in mind the self runner must be setup with a model in C:\actions-runner\
+    - name: '[Win] Download models'
       if: ${{ inputs.os == 'windows' }}
-      shell: powershell
       run: |
-        Set-Location $Env:GITHUB_ACTION_PATH
-        ls
-        conda activate comfyui
-        $jsonInput = '${{ inputs.models-json }}'
-        $jsonInputEscaped = $jsonInput -replace '"', '\"'
-        $outputDir = "$Env:GITHUB_WORKSPACE\models\"
-        Write-Host "Running download-models.py with input: $jsonInputEscaped and output directory: $outputDir"
-        python download-models.py raw "$jsonInputEscaped" "$outputDir"
+        cd $Env:GITHUB_ACTION_PATH
+        ls "$Env:GITHUB_WORKSPACE"
+        cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
+      shell: powershell
+
+    # - name: '[Windows] Download models'
+    #   if: ${{ inputs.os == 'windows' }}
+    #   shell: powershell
+    #   run: |
+    #     Set-Location $Env:GITHUB_ACTION_PATH
+    #     ls
+    #     conda activate comfyui
+    #     $jsonInput = '${{ inputs.models-json }}'
+    #     $jsonInputEscaped = $jsonInput -replace '"', '\"'
+    #     $outputDir = "$Env:GITHUB_WORKSPACE\models\"
+    #     Write-Host "Running download-models.py with input: $jsonInputEscaped and output directory: $outputDir"
+    #     python download-models.py raw "$jsonInputEscaped" "$outputDir"
 
     - name: '[Win] Run Python application'
       if: ${{ inputs.os == 'windows' }}
@@ -301,14 +296,14 @@ runs:
         "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
 
     - name: '[Windows] Queue Prompts'
-      id: windows_queue_prompt
+      id: windows_action
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
         cd $Env:GITHUB_ACTION_PATH
         conda activate comfyui
         Write-Host "Running workflows: ${{ inputs.workflow_filenames }}"
-        python queue_prompt.py `
+        python action.py `
           --comfy-workflow-names "${{ inputs.workflow_filenames }}" `
           --github-action-workflow-name "${{ github.workflow }}" `
           --os "${{ inputs.os }}" `
