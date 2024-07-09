@@ -5,7 +5,11 @@ param (
 
 # Initialize Conda environment
 # TODO: remove hardcoding
-& conda activate comfyui
+echo Starting Conda
+conda activate comfyui
 
 # Start the web server and redirect output to a log file
-& python "$GITHUB_WORKSPACE/main.py" --force-fp16 *> "$GITHUB_WORKSPACE/application.log"
+echo Running Server
+python "$GITHUB_WORKSPACE/main.py" --force-fp16 *> "$GITHUB_WORKSPACE/application.log"
+
+echo Done
