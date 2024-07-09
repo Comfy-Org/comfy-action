@@ -244,13 +244,13 @@ runs:
     #     save-always: true
 
     # Keep in mind the self runner must be setup with a model in C:\actions-runner\
-    - name: '[Win] Download models'
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        cd $Env:GITHUB_ACTION_PATH
-        ls "$Env:GITHUB_WORKSPACE"
-        cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
-      shell: powershell
+    # - name: '[Win] Download models'
+    #   if: ${{ inputs.os == 'windows' }}
+    #   run: |
+    #     cd $Env:GITHUB_ACTION_PATH
+    #     ls "$Env:GITHUB_WORKSPACE"
+    #     cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
+    #   shell: powershell
 
     # - name: '[Windows] Download models'
     #   if: ${{ inputs.os == 'windows' }}
