@@ -209,7 +209,7 @@ runs:
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
       run: |
-        conda activate gha-comfyui 
+        conda activate gha-comfyui
         conda info
         conda list
       shell: powershell
@@ -235,7 +235,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       run: |
         cd $Env:GITHUB_ACTION_PATH
-        conda activate comfyui
+        conda activate gha-comfyui
         python poll_server_start.py
       shell: powershell
 
@@ -257,7 +257,7 @@ runs:
       shell: powershell
       run: |
         cd $Env:GITHUB_ACTION_PATH
-        conda activate comfyui
+        conda activate gha-comfyui
         Write-Host "Running workflows: ${{ inputs.workflow_filenames }}"
         python action.py `
           --comfy-workflow-names "${{ inputs.workflow_filenames }}" `

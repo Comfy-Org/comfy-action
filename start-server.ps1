@@ -6,7 +6,7 @@ param (
 # Initialize Conda environment
 # TODO: remove hardcoding
 echo "Starting Conda"
-conda activate comfyui
+conda activate gha-comfyui
 
 # Start the web server and redirect output to a log file
 echo "Running Server"
