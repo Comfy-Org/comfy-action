@@ -84,17 +84,16 @@ runs:
     ############################################################
     - name: '[Unix] Auth to GCS'
       uses: "google-github-actions/auth@v2"
+      if: ${{ inputs.os != 'windows' }}
       with:
         credentials_json: "${{ inputs.google_credentials }}"
   
-    # - name: '[Unix] Setup Conda'
-    #   uses: conda-incubator/setup-miniconda@v3
-    #   if: ${{ inputs.os != 'windows' }}
-    #   with:
-    #     activate-environment: comfyui
-    #     auto-activate-base: false
-    #     environment-file: ${{ inputs.conda_env_file }}
-    #     use-only-tar-bz2: true
+    - name: '[Unix] Setup Conda'
+      uses: conda-incubator/setup-miniconda@v3
+      if: ${{ inputs.os != 'windows' }}
+      with:
+        activate-environment: gha-comfyui
+        auto-activate-base: false
 
     - name: '[Unix] Check conda environment'
       if: ${{ inputs.os != 'windows' }}
@@ -103,21 +102,13 @@ runs:
         conda list
       shell: bash -el {0}
     
-    # - name: '[Unix] Generate hash from models-json'
-    #   if: ${{ inputs.os != 'windows' }}
-    #   id: generate_hash
-    #   run: |
-    #     echo "hash=$(echo '${{ inputs.models-json }}' | sha256sum | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
-    #   shell: bash
+    - name: '[Unix-Only] Generate hash from models-json'
+      if: ${{ inputs.os != 'windows' }}
+      id: generate_hash
+      run: |
+        echo "hash=$(echo '${{ inputs.models-json }}' | sha256sum | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
+      shell: bash
 
-    # - name: '[Unix] Cache models'
-    #   if: ${{ inputs.os != 'windows' }}
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: ${{ github.workspace }}/models
-    #     key: ${{ runner.os }}-models-${{ steps.generate_hash.outputs.hash }}
-    #     save-always: true
-  
     - name: '[Unix] Download models'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
@@ -125,11 +116,11 @@ runs:
         cd ${{ github.action_path }}
         python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
         
-    - name: '[Unix] Run Python application in background'
+    - name: '[Unix] Run ComfyUI'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        comfy launch -- --force-fp16 > application.log 2>&1 &
+        python3 main.py > application.log 2>&1 &
 
     - name: '[Unix] Check if the server is running'
       if: ${{ inputs.os != 'windows' }}
@@ -153,7 +144,7 @@ runs:
         echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
         echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
-    - name: '[Unix] Queue Prompts'
+    - name: '[Unix] Run Python Action'
       id: unix_action
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
@@ -161,6 +152,13 @@ runs:
         cd ${{ github.action_path }}
         echo "Running workflows: ${{inputs.workflow_filenames}}"
         python3 action.py --comfy-workflow-names ${{ inputs.workflow_filenames }} --github-action-workflow-name "${{ github.workflow }}" --os "${{ inputs.os }}" --run-id "${{ github.run_id }}" --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" --workspace-path "${{ github.workspace }}" --output-file-prefix ${{ inputs.output_prefix }} --repo "${{ github.repository }}" --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" --branch-name "${{ github.ref_name }}" --api-endpoint "${{ inputs.api_endpoint }}" 
+        
+    - name: '[Unix] Upload Output Files'
+      uses: actions/upload-artifact@v4
+      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
+      with:
+        name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
+        path: ${{ github.workspace }}/output/**
 
     - name: '[Unix] Upload Output Files'
       uses: actions/upload-artifact@v4
@@ -170,7 +168,7 @@ runs:
         path: ${{ github.workspace }}/output/**
 
     - name: '[Unix] Upload log file'
-      if: ${{ inputs.os != 'windows' }}
+      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       uses: actions/upload-artifact@v4
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
@@ -207,22 +205,28 @@ runs:
     ##                                                                                 ##
     ##                                                                                 ##
     #####################################################################################
+
   
     - name: '[Win] Auth to GCS'
       uses: "google-github-actions/auth@v2"
+      if: ${{ inputs.os == 'windows' }}
       with:
         credentials_json: "${{ inputs.google_credentials }}"
 
-    # - name: '[Win-Only] Install Conda Env'
-    #   if: ${{ inputs.os == 'windows' }}
-    #   shell: powershell
-    #   run: |
-    #     conda env update -f ${{ inputs.conda_env_file }}
+    - name: '[Win] Setup Conda'
+      uses: conda-incubator/setup-miniconda@v3.0.3
+      if: ${{ inputs.os == 'windows' }}
+      with:
+        auto-update-conda: true
+        miniconda-version: latest
+        activate-environment: gha-comfyui
+        python-version: ${{ inputs.python_version }}
+      continue-on-error: true
 
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
       run: |
-        conda activate comfyui
+        conda activate gha-comfyui 
         conda info
         conda list
       shell: powershell
@@ -272,7 +276,7 @@ runs:
     #     Write-Host "Running download-models.py with input: $jsonInputEscaped and output directory: $outputDir"
     #     python download-models.py raw "$jsonInputEscaped" "$outputDir"
 
-    - name: '[Win] Run Python application'
+    - name: '[Win] Run ComfyUI'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
@@ -302,7 +306,7 @@ runs:
         "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
         "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
 
-    - name: '[Win] Queue Prompts'
+    - name: '[Win] Run Python Action'
       id: windows_action
       if: ${{ inputs.os == 'windows' }}
       shell: powershell

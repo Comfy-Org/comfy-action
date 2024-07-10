@@ -121,7 +121,7 @@ def main(args):
         end_time = int(datetime.datetime.now().timestamp())
 
         # TODO: add support for multiple file outputs
-        gs_path = f"output-files/{args.github_action_workflow_name}-{args.os}-{workflow_file_name}-run-${args.run_id}"
+        gs_path = f"output-files/{args.github_action_workflow_name}-{args.os}-{workflow_file_name}-run-{args.run_id}"
         upload_to_gcs(
             args.gsc_bucket_name,
             gs_path,
