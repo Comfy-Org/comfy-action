@@ -107,7 +107,7 @@ def get_step_names(
 
     if len(unix_step_names) + len(wins_step_names) != len(step_names):
         uncategorized_steps = set(step_names) - set(unix_step_names + wins_step_names)
-        raise Exception("There steps are not categorized: {}".format(uncategorized_steps))
+        raise Exception("There steps are not categorized: {}\nYou need to add [Win] or [Unix] and test by running python action_yaml_checker.py".format(uncategorized_steps))
 
     tabulated_list = conditional_zip(
         unix_step_names, wins_step_names, step_name_extra_info_map, complete=complete
