@@ -1,6 +1,6 @@
 """
 This python script helps check if action yaml files have step names and the
-windows actions are ligning up with the unix actions.
+windows actions are lining up with the unix actions.
 
 e.g. > python action_yaml_checker.py action.yml
 
