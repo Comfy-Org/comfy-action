@@ -1,6 +1,7 @@
 # start-server.ps1
 param (
-    [String]$GITHUB_WORKSPACE
+    [String]$GITHUB_WORKSPACE,
+    [String]$PythonFlags
 )
 
 # Initialize Conda environment

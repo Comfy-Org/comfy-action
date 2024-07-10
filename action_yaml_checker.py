@@ -8,6 +8,7 @@ e.g. > python action_yaml_checker.py action.yml
 import yaml
 from tabulate import tabulate
 import argparse
+import textwrap
 
 parser = argparse.ArgumentParser(description="Check if action yaml files have step names and if windows actions are aligned with unix actions.")
 parser.add_argument("-c", "--complete", action="store_true", help="Include complete step information")
@@ -19,6 +20,25 @@ parser.add_argument(
 )
 parser.add_argument("yaml_file", help="Path to the YAML file")
 
+def wrap_text(text, max_width=100):
+    """
+    Wraps the text to a specified max width for each line.
+
+    Args:
+    text (str): The input text to be wrapped.
+    max_width (int): The maximum width of each line.
+
+    Returns:
+    str: The wrapped text.
+    """
+    # Split the text into lines
+    lines = text.split('\n')
+
+    # Wrap each line and join them with newline characters
+    wrapped_lines = [textwrap.fill(line, max_width) for line in lines]
+    wrapped_text = '\n'.join(wrapped_lines)
+
+    return wrapped_text
 
 def conditional_zip(x, y, step_name_extra_info_map, complete: bool = False):
     combined_list = []
@@ -77,7 +97,7 @@ def get_step_names(
 
         if '[Win' in step['name']:
             wins_step_names.append(step['name'])
-        step_name_extra_info_map[step["name"]] = (
+        step_name_extra_info_map[step["name"]] = wrap_text(
             step[step_key]
             if step_key in step
             else step.get(
@@ -93,7 +113,7 @@ def get_step_names(
         unix_step_names, wins_step_names, step_name_extra_info_map, complete=complete
     )
 
-    print(tabulate(tabulated_list, headers=['Unix', 'Windows'], tablefmt='grid'))
+    print(tabulate(tabulated_list, headers=['Unix', 'Windows'], tablefmt='fancy_grid'))
 
 
 if __name__ == "__main__":

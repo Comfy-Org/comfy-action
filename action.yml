@@ -92,6 +92,13 @@ runs:
         activate-environment: gha-comfyui
         auto-activate-base: false
 
+    - name: '[Unix] Install dependencies'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        which pip3
+        pip3 install -r requirements.txt
+
     - name: '[Unix] Check conda environment'
       if: ${{ inputs.os != 'windows' }}
       run: |
@@ -106,7 +113,7 @@ runs:
         cd ${{ github.action_path }}
         python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
 
-    - name: '[Unix] Run Python application in background'
+    - name: '[Unix] Run ComfyUI'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
@@ -141,7 +148,7 @@ runs:
       run: |
         cd ${{ github.action_path }}
         echo "Running workflows: ${{inputs.workflow_filenames}}"
-        python3 action.py --comfy-workflow-names ${{ inputs.workflow_filenames }} --github-action-workflow-name "${{ github.workflow }}" --os "${{ inputs.os }}" --run-id "${{ github.run_id }}" --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" --workspace-path "${{ github.workspace }}" --output-file-prefix ${{ inputs.output_prefix }} --repo "${{ github.repository }}" --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" --branch-name "${{ github.ref_name }}" --api-endpoint "${{ inputs.api_endpoint }}" 
+        python3 action.py --comfy-workflow-names ${{ inputs.workflow_filenames }} --github-action-workflow-name "${{ github.workflow }}" --os "${{ inputs.os }}" --run-id "${{ github.run_id }}" --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" --workspace-path "${{ github.workspace }}" --output-file-prefix ${{ inputs.output_prefix }} --repo "${{ github.repository }}" --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" --branch-name "${{ github.ref_name }}" --api-endpoint "${{ inputs.api_endpoint }}" ${{ inputs.comfyui_flags }}
         
     - name: '[Unix] Upload Output Files'
       uses: actions/upload-artifact@v4
@@ -206,6 +213,19 @@ runs:
         python-version: ${{ inputs.python_version }}
       continue-on-error: true
 
+    - name: '[Win-Only] Install Pytorch'
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia --yes
+
+    - name: '[Win] Install dependencies'
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        Get-Command pip
+        pip install -r requirements.txt
+
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
       run: |
@@ -221,7 +241,7 @@ runs:
         python default-models-prep.py --cache-directory C:\actions-runner\modelcache --live-directory "$Env:GITHUB_WORKSPACE/models"
       shell: powershell
 
-    - name: '[Win] Run Python application in background'
+    - name: '[Win] Run ComfyUI'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
@@ -272,7 +292,8 @@ runs:
           --commit-time "${{ steps.win_get_commit_details.outputs.commit_time }}" `
           --commit-message "${{ steps.win_get_commit_details.outputs.commit_title }}" `
           --branch-name "${{ github.ref_name }}" `
-          --api-endpoint "${{ inputs.api_endpoint }}"
+          --api-endpoint "${{ inputs.api_endpoint }}" `
+          ${{ inputs.comfyui_flags }}
 
     - name: '[Win] Upload Output Files'
       uses: actions/upload-artifact@v4

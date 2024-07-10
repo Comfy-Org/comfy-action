@@ -1,4 +1,4 @@
-import os, sys, requests, argparse, hashlib, shutil
+import os, requests, argparse, hashlib, shutil
 from tqdm import tqdm
 
 
