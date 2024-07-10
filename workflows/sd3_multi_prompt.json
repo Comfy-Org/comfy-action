@@ -133,7 +133,7 @@
   },
   "252": {
     "inputs": {
-      "ckpt_name": "sdv3/2b_1024/sd3_medium.safetensors"
+      "ckpt_name": "sd3_medium.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {

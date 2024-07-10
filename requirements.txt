@@ -2,3 +2,4 @@ requests
 comfy-cli
 google-cloud-storage
 charset-normalizer
+tqdm

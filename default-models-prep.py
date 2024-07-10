@@ -1,0 +1,93 @@
+import os, sys, requests, argparse, hashlib, shutil
+from tqdm import tqdm
+
+
+MODELS = {
+    "checkpoints/v1-5-pruned-emaonly.safetensors": {
+        "url": "https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/39593d5650112b4cc580433f6b0435385882d819/v1-5-pruned-emaonly.safetensors",
+        "hash": "6ce0161689b3853acaa03779ec93eafe75a02f4ced659bee03f50797806fa2fa"
+    },
+    "loras/epiNoiseoffset_v2.safetensors": {
+        "url": "https://huggingface.co/adhikjoshi/epi_noiseoffset/resolve/e018bf906acfcd139ca23553ea2c6ea9f5fd65fd/epiNoiseoffset_v2.safetensors",
+        "hash": "81680c064e9f50dfcc11ec5e25da1832f523ec84afd544f372c7786f3ddcbbac"
+    },
+    "clip/clip_l.safetensors": {
+        "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/8e77bf03ec19bd890923edca2982516a1bdd92bc/text_encoder/model.fp16.safetensors",
+        "hash": "660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd"
+    },
+    "clip/clip_g.safetensors": {
+        "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/8e77bf03ec19bd890923edca2982516a1bdd92bc/text_encoder_2/model.fp16.safetensors",
+        "hash": "ec310df2af79c318e24d20511b601a591ca8cd4f1fce1d8dff822a356bcdb1f4"
+    },
+    "clip/t5xxl_fp8_e4m3fn.safetensors": {
+        "url": "https://huggingface.co/mcmonkey/google_t5-v1_1-xxl_encoderonly/resolve/50d42fdb91a03fb7b6d2b9f395bbaa11482086c9/t5xxl_fp8_e4m3fn.safetensors",
+        "hash": "7d330da4816157540d6bb7838bf63a0f02f573fc48ca4d8de34bb0cbfd514f09"
+    },
+    # SD3 gate blocks autodownload, but HF allows this other to stay up - the hash check will verify nothing weird happened
+    "checkpoints/sd3_medium.safetensors": {
+        "url": "https://huggingface.co/adamo1139/stable-diffusion-3-medium-ungated/resolve/74b6131496fceb9f896c2e3d6465c2241ea22ae6/sd3_medium.safetensors",
+        "hash": "cc236278d28c8c3eccb8e21ee0a67ebed7dd6e9ce40aa9de914fa34e8282f191"
+    }
+}
+
+
+def download_model(url, path, model_name, expected_hash):
+    print(f"Downloading {model_name} from {url}...")
+
+    temp_file_path = os.path.join(path, f"{model_name}.tmp")
+    if os.path.exists(temp_file_path):
+        os.remove(temp_file_path)
+
+    hash_tracker = hashlib.sha256()
+
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        total_size = int(r.headers.get("content-length", 0))
+
+        with tqdm(total=total_size, unit="B", unit_scale=True, mininterval=2) as progress_bar:
+            with open(temp_file_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+                    hash_tracker.update(chunk)
+                    progress_bar.update(len(chunk))
+
+        if total_size != 0 and progress_bar.n != total_size:
+            raise RuntimeError("Could not download file")
+
+    file_hash = hash_tracker.hexdigest()
+    if expected_hash != file_hash:
+        raise RuntimeError(f"Hash mismatch for {model_name} - expected {expected_hash} but got {file_hash}")
+
+    os.rename(temp_file_path, os.path.join(path, model_name))
+    print(f"Downloaded {model_name}.")
+
+
+def main(args):
+    cache_dir = args.cache_directory
+    live_dir = args.live_directory
+    for model_name, model_info in MODELS.items():
+        cache_target = os.path.join(cache_dir, model_name)
+        os.makedirs(os.path.dirname(cache_target), exist_ok=True)
+        if not os.path.exists(cache_target):
+            download_model(model_info['url'], cache_dir, model_name, model_info['hash'])
+        live_target = os.path.join(live_dir, model_name)
+        os.makedirs(os.path.dirname(live_target), exist_ok=True)
+        if not os.path.exists(live_target):
+            # copy the file
+            shutil.copyfile(cache_target, live_target)
+            print(f"Copied {model_name} to {live_target}.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Download and prepare the standard models the Comfy Action Runner tests against."
+    )
+    parser.add_argument(
+        "--cache-directory", help="Cache directory where models will be downloaded."
+    )
+    parser.add_argument(
+        "--live-directory", help="Directory where models will be placed for live usage."
+    )
+
+    args = parser.parse_args()
+    main(args)
