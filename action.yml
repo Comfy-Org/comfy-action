@@ -50,9 +50,6 @@ inputs:
     description: "Comfy Org API endpoint"
     required: false
     default: "https://api.comfy.org/upload-artifact"
-  conda_env_file:
-    description: "Conda environment file. Path is relative to your repository root. The environment name must be comfyui."
-    required: true
 runs:
   using: "composite"
   steps:
