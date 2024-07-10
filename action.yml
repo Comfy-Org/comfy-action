@@ -103,28 +103,13 @@ runs:
         conda list
       shell: bash -el {0}
     
-    # - name: '[Unix] Generate hash from models-json'
-    #   if: ${{ inputs.os != 'windows' }}
-    #   id: generate_hash
-    #   run: |
-    #     echo "hash=$(echo '${{ inputs.models-json }}' | sha256sum | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
-    #   shell: bash
-
-    # - name: '[Unix] Cache models'
-    #   if: ${{ inputs.os != 'windows' }}
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: ${{ github.workspace }}/models
-    #     key: ${{ runner.os }}-models-${{ steps.generate_hash.outputs.hash }}
-    #     save-always: true
-  
     - name: '[Unix] Download models'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
-        python3 download-models.py raw '${{ inputs.models-json }}' "${{ github.workspace }}/models/"
-        
+        python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
+
     - name: '[Unix] Run Python application in background'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
@@ -227,52 +212,14 @@ runs:
         conda list
       shell: powershell
 
-    # - name: '[Win] Generate hash from models-json'
-    #   if: ${{ inputs.os == 'windows' }}
-    #   id: generate_hash_windows
-    #   run: |
-    #     Set-Location $Env:GITHUB_ACTION_PATH
-    #     conda activate comfyui
-    #     ls
-    #     Write-Host "Running hash_string.py..."
-    #     python hash_string.py '${{ inputs.models-json }}' > hash_output.txt
-    #     $hash = Get-Content hash_output.txt
-    #     Write-Host "Hash value: $hash"
-    #     echo "hash=$hash" >> $Env:GITHUB_ENV
-    #   shell: powershell
-
-
-    # - name: '[Win] Cache models'
-    #   if: ${{ inputs.os == 'windows' }}
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: ${{ github.workspace }}/models
-    #     key: ${{ runner.os }}-models-${{ steps.generate_hash_windows.outputs.hash }}
-    #     save-always: true
-
-    # Keep in mind the self runner must be setup with a model in C:\actions-runner\
     - name: '[Win] Download models'
       if: ${{ inputs.os == 'windows' }}
       run: |
         cd $Env:GITHUB_ACTION_PATH
-        ls "$Env:GITHUB_WORKSPACE"
-        cp "C:\actions-runner\v1-5-pruned-emaonly.ckpt" "$Env:GITHUB_WORKSPACE/models/checkpoints"
+        python default-models-prep.py --cache-directory C:\actions-runner\modelcache --live-directory "$Env:GITHUB_WORKSPACE/models"
       shell: powershell
 
-    # - name: '[Win] Download models'
-    #   if: ${{ inputs.os == 'windows' }}
-    #   shell: powershell
-    #   run: |
-    #     Set-Location $Env:GITHUB_ACTION_PATH
-    #     ls
-    #     conda activate comfyui
-    #     $jsonInput = '${{ inputs.models-json }}'
-    #     $jsonInputEscaped = $jsonInput -replace '"', '\"'
-    #     $outputDir = "$Env:GITHUB_WORKSPACE\models\"
-    #     Write-Host "Running download-models.py with input: $jsonInputEscaped and output directory: $outputDir"
-    #     python download-models.py raw "$jsonInputEscaped" "$outputDir"
-
-    - name: '[Win] Run Python application'
+    - name: '[Win] Run Python application in background'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
