@@ -44,7 +44,7 @@ def download_model(url, path, model_name, expected_hash):
         r.raise_for_status()
         total_size = int(r.headers.get("content-length", 0))
 
-        with tqdm(total=total_size, unit="B", unit_scale=True) as progress_bar:
+        with tqdm(total=total_size, unit="B", unit_scale=True, mininterval=2) as progress_bar:
             with open(temp_file_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
