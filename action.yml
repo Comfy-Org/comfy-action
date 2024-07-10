@@ -170,7 +170,7 @@ runs:
         path: ${{ github.workspace }}/output/**
 
     - name: '[Unix] Upload log file'
-      if: ${{ inputs.os != 'windows' }}
+      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       uses: actions/upload-artifact@v4
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
@@ -178,7 +178,7 @@ runs:
 
     - name: '[Unix] Cleanup output files only'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
-      shell: powershell
+      shell: bash -el {0}
       run: rm -rf ${{ github.workspace }}/*
 
     # - name: '[Unix] Cleanup Conda'
