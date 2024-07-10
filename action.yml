@@ -150,13 +150,6 @@ runs:
         name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/output/**
 
-    - name: '[Unix] Upload Output Files'
-      uses: actions/upload-artifact@v4
-      if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
-      with:
-        name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
-        path: ${{ github.workspace }}/output/**
-
     - name: '[Unix] Upload log file'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       uses: actions/upload-artifact@v4
