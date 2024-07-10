@@ -6,10 +6,6 @@ Sets up ComfyUI on Github Action Runner and execute a workflow json.
 
 This is meant to be run in the ComfyUI repository.
 
-### TODO
-
-[] Have option to compare results with previous runs.
-
 ### Set up your local self-hosted runner
 
 - Follow the steps here: https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners
