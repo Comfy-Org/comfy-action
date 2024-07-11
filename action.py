@@ -1,6 +1,8 @@
 import argparse
 import datetime
 import json
+import os
+import re
 import subprocess
 
 import requests
@@ -22,6 +24,15 @@ def get_status(prompt_id, url):
         return response.json()
     return None
 
+
+def make_unix_safe(filename):
+    # Replace spaces with underscores
+    safe_filename = filename.replace(" ", "_")
+
+    # Remove any characters that are not alphanumeric, underscores, or hyphens
+    safe_filename = re.sub(r'[^\w\-\.]', '', safe_filename)
+
+    return safe_filename
 
 def is_completed(status_response, prompt_id):
     # Check if the expected fields exist in the response
@@ -110,6 +121,7 @@ def main(args):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                env=os.environ,
             )
             print("Output:", result.stdout)
         except subprocess.CalledProcessError as e:
@@ -121,7 +133,7 @@ def main(args):
         end_time = int(datetime.datetime.now().timestamp())
 
         # TODO: add support for multiple file outputs
-        gs_path = f"output-files/{args.github_action_workflow_name}-{args.os}-{workflow_file_name}-run-{args.run_id}"
+        gs_path = make_unix_safe(f"output-files/{args.github_action_workflow_name}-{args.os}-{workflow_file_name}-run-{args.run_id}")
         upload_to_gcs(
             args.gsc_bucket_name,
             gs_path,

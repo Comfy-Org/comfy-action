@@ -182,11 +182,6 @@ runs:
       shell: "bash"
       run: sleep 600
 
-    # - name: Sleep for 10 minutes on failure
-    #   if: ${{ inputs.os == 'windows' && failure() }}
-    #   shell: powershell
-    #   run: Start-Sleep -Seconds 600
-
     - name: '[Unix] Upload Output Files'
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
@@ -372,6 +367,11 @@ runs:
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
+
+    # - name: '[Win] Sleep for 10 minutes on failure'
+    #   if: ${{ inputs.os == 'windows' && failure() }}
+    #   shell: powershell
+    #   run: Start-Sleep -Seconds 600
 
     - name: '[Win] Cleanup output files only'
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
