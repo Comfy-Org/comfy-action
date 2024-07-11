@@ -106,7 +106,7 @@ runs:
       run: |
         conda install pytorch torchvision torchaudio -c pytorch-nightly
 
-    - name: '[Unix-Liux-Only] Install Pytorch'
+    - name: '[Unix-Linux-Only] Install Pytorch'
       if: ${{ inputs.os == 'linux' }}
       shell: bash -el {0}
       run: |
