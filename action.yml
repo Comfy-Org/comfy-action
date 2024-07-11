@@ -84,13 +84,28 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       with:
         credentials_json: "${{ inputs.google_credentials }}"
-  
+
     - name: '[Unix] Setup Conda'
-      uses: conda-incubator/setup-miniconda@v3
+      uses: conda-incubator/setup-miniconda@v3.0.3
       if: ${{ inputs.os != 'windows' }}
       with:
+        auto-update-conda: true
+        miniconda-version: latest
         activate-environment: gha-comfyui
         auto-activate-base: false
+        python-version: ${{ inputs.python_version }}
+
+    - name: '[Unix-Mac-Only] Install Pytorch nightly'
+      if: ${{ inputs.os == 'macos' }}
+      shell: bash -el {0}
+      run: |
+        conda install pytorch torchvision torchaudio -c pytorch-nightly
+
+    - name: '[Unix-Liux-Only] Install Pytorch'
+      if: ${{ inputs.os == 'linux' }}
+      shell: bash -el {0}
+      run: |
+        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
 
     - name: '[Unix] Install dependencies'
       if: ${{ inputs.os != 'windows' }}
@@ -112,6 +127,12 @@ runs:
       run: |
         cd ${{ github.action_path }}
         python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
+
+    - name: '[Unix] Run ComfyUI quick test'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
+      run: |
+        comfy launch -- --quick-test-for-ci
 
     - name: '[Unix] Run ComfyUI'
       if: ${{ inputs.os != 'windows' }}
@@ -149,13 +170,22 @@ runs:
         cd ${{ github.action_path }}
         echo "Running workflows: ${{inputs.workflow_filenames}}"
         python3 action.py --comfy-workflow-names ${{ inputs.workflow_filenames }} --github-action-workflow-name "${{ github.workflow }}" --os "${{ inputs.os }}" --run-id "${{ github.run_id }}" --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" --workspace-path "${{ github.workspace }}" --output-file-prefix ${{ inputs.output_prefix }} --repo "${{ github.repository }}" --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" --branch-name "${{ github.ref_name }}" --api-endpoint "${{ inputs.api_endpoint }}" ${{ inputs.comfyui_flags }}
-        
+
     - name: '[Unix] Upload Output Files'
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       with:
         name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/output/**
+
+    - name: '[Unix] Upload log file to GCS'
+      if: ${{ ( success() || failure() ) && inputs.os != 'windows' }}
+      id: unix_upload-log-files
+      uses: google-github-actions/upload-cloud-storage@v2
+      with:
+        path: ${{ github.workspace }}/application.log
+        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+
 
     - name: '[Unix] Upload log file'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
@@ -196,7 +226,7 @@ runs:
     ##                                                                                 ##
     #####################################################################################
 
-  
+
     - name: '[Win] Auth to GCS'
       uses: "google-github-actions/auth@v2"
       if: ${{ inputs.os == 'windows' }}
@@ -240,6 +270,12 @@ runs:
         cd $Env:GITHUB_ACTION_PATH
         python default-models-prep.py --cache-directory C:\actions-runner\modelcache --live-directory "$Env:GITHUB_WORKSPACE/models"
       shell: powershell
+
+    - name: '[Win] Run ComfyUI quick test'
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
 
     - name: '[Win] Run ComfyUI'
       if: ${{ inputs.os == 'windows' }}
@@ -308,7 +344,15 @@ runs:
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
-    
+
+    - name: '[Win] Upload log file to GCS'
+      if: ${{ ( success() || failure() ) && inputs.os == 'windows'}}
+      id: win_upload-log-files
+      uses: google-github-actions/upload-cloud-storage@v2
+      with:
+        path: ${{ github.workspace }}/application.log
+        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+
     - name: '[Win] Cleanup output files only'
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       shell: powershell
