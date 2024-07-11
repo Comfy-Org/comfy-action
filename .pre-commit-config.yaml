@@ -8,3 +8,5 @@ repos:
     language: python
     pass_filenames: false
     additional_dependencies: [pyyaml, tabulate]  # Add this line to specify the dependency
+    exclude: ^((?!main).)*$
+
