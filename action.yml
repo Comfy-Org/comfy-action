@@ -348,13 +348,6 @@ runs:
         name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
         path: ${{ github.workspace }}/output/**
 
-    - name: '[Win] Upload log file'
-      uses: actions/upload-artifact@v4
-      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
-      with:
-        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
-        path: ${{ github.workspace }}/application.log
-
     - name: '[Win] Upload log file to GCS'
       if: ${{ ( success() || failure() ) && inputs.os == 'windows'}}
       id: win_upload-log-files
@@ -362,6 +355,13 @@ runs:
       with:
         path: ${{ github.workspace }}/application.log
         destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+
+    - name: '[Win] Upload log file'
+      uses: actions/upload-artifact@v4
+      if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
+      with:
+        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
+        path: ${{ github.workspace }}/application.log
 
     - name: '[Win] Cleanup output files only'
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
