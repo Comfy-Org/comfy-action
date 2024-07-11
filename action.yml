@@ -103,7 +103,7 @@ runs:
           console.log(`ComfyUI Flags: ${{ inputs.comfyui_flags }}`);
           console.log(`Workflow Raw JSON: ${{ inputs.workflow_raw_json }}`);
           console.log(`Timeout: ${{ inputs.timeout }}`);
-          console.log(`Google Credentials: ${{ inputs.google_credentials }}`);
+          console.log(`Google Credentials: Actually no`);
           console.log(`GCS Bucket Name: ${{ inputs.gcs_bucket_name }}`);
           console.log(`Output Prefix: ${{ inputs.output_prefix }}`);
           console.log(`API Endpoint: ${{ inputs.api_endpoint }}`);
