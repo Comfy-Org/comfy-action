@@ -295,7 +295,7 @@ runs:
         Write-Output "##############################"
         Write-Output $envGithubWorkspace
         Write-Output "##############################"
-        Start-Process powershell -ArgumentList "-File", "${{ github.action_path }}\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`""
+        Start-Process powershell -ArgumentList "-File", "${{ github.action_path }}\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`"", "-CondaEnv", "`"gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}`""
 
     - name: '[Win] Check if the server is running'
       if: ${{ inputs.os == 'windows' }}

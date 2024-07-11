@@ -1,8 +1,14 @@
 # start-server.ps1
 param (
     [String]$GITHUB_WORKSPACE,
-    [String]$PythonFlags
+    [String]$PythonFlags,
+    [String]$CondaEnv
 )
+
+# Initialize Conda environment
+# TODO: remove hardcoding
+echo "Starting Conda"
+conda activate "$CondaEnv"
 
 # Start the web server and redirect output to a log file
 echo "Running Server"
