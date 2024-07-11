@@ -94,20 +94,20 @@ runs:
       uses: actions/github-script@v5
       with:
         script: |
-          console.log(`Operating System: ${{ github.event.inputs.os }}`);
-          console.log(`Python Version: ${{ github.event.inputs.python_version }}`);
-          console.log(`CUDA Version: ${{ github.event.inputs.cuda_version }}`);
-          console.log(`Pytorch Version: ${{ github.event.inputs.torch_version }}`);
-          console.log(`Models JSON: ${{ github.event.inputs['models-json'] }}`);
-          console.log(`Workflow Filenames: ${{ github.event.inputs.workflow_filenames }}`);
-          console.log(`ComfyUI Flags: ${{ github.event.inputs.comfyui_flags }}`);
-          console.log(`Workflow Raw JSON: ${{ github.event.inputs.workflow_raw_json }}`);
-          console.log(`Timeout: ${{ github.event.inputs.timeout }}`);
-          console.log(`Google Credentials: ${{ github.event.inputs.google_credentials }}`);
-          console.log(`GCS Bucket Name: ${{ github.event.inputs.gcs_bucket_name }}`);
-          console.log(`Output Prefix: ${{ github.event.inputs.output_prefix }}`);
-          console.log(`API Endpoint: ${{ github.event.inputs.api_endpoint }}`);
-          console.log(`Skip QuickCI: ${{ github.event.inputs.skip_quickci }}`);
+          console.log(`Operating System: ${{ inputs.os }}`);
+          console.log(`Python Version: ${{ inputs.python_version }}`);
+          console.log(`CUDA Version: ${{ inputs.cuda_version }}`);
+          console.log(`Pytorch Version: ${{ inputs.torch_version }}`);
+          console.log(`Models JSON: ${{ inputs['models-json'] }}`);
+          console.log(`Workflow Filenames: ${{ inputs.workflow_filenames }}`);
+          console.log(`ComfyUI Flags: ${{ inputs.comfyui_flags }}`);
+          console.log(`Workflow Raw JSON: ${{ inputs.workflow_raw_json }}`);
+          console.log(`Timeout: ${{ inputs.timeout }}`);
+          console.log(`Google Credentials: ${{ inputs.google_credentials }}`);
+          console.log(`GCS Bucket Name: ${{ inputs.gcs_bucket_name }}`);
+          console.log(`Output Prefix: ${{ inputs.output_prefix }}`);
+          console.log(`API Endpoint: ${{ inputs.api_endpoint }}`);
+          console.log(`Skip QuickCI: ${{ inputs.skip_quickci }}`);
 
     #####################################################################################
     ##                           Windows Steps (F**k powershell)                       ##
