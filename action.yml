@@ -247,28 +247,25 @@ runs:
         python-version: ${{ inputs.python_version }}
       continue-on-error: true
 
-    - name: "[Win] Activate conda"
-      if: ${{ inputs.os == 'windows' }}
-      run: |
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-      shell: powershell
-
     - name: '[Win-Only] Install Pytorch'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        Get-Command pip
         pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
     - name: '[Win] Install dependencies'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        Get-Command pip
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         pip install -r requirements.txt
 
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         conda info
         conda list
       shell: powershell
@@ -276,6 +273,7 @@ runs:
     - name: '[Win] Download models'
       if: ${{ inputs.os == 'windows' }}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         cd $Env:GITHUB_ACTION_PATH
         pip install -r requirements.txt
         python default-models-prep.py --cache-directory C:\actions-runner\modelcache --live-directory "$Env:GITHUB_WORKSPACE/models"
@@ -285,6 +283,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
 
     - name: '[Win] Run ComfyUI'
@@ -295,6 +294,7 @@ runs:
         Write-Output "##############################"
         Write-Output $envGithubWorkspace
         Write-Output "##############################"
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         Start-Process powershell -ArgumentList "-File", "${{ github.action_path }}\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`"", "-CondaEnv", "`"gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}`""
 
     - name: '[Win] Check if the server is running'
@@ -323,7 +323,7 @@ runs:
       shell: powershell
       run: |
         cd $Env:GITHUB_ACTION_PATH
-        conda activate gha-comfyui
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         Write-Host "Running workflows: ${{ inputs.workflow_filenames }}"
         python action.py `
           --comfy-workflow-names "${{ inputs.workflow_filenames }}" `
