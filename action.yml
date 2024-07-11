@@ -42,6 +42,7 @@ inputs:
   gcs_bucket_name:
     description: "Name of the GCS bucket to upload the output files to. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
     required: false
+    default: "comfy-ci-results"
   output_prefix:
     description: "Prefix for the output files. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
     required: false
