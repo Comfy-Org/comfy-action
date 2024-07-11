@@ -51,6 +51,10 @@ inputs:
     description: "Comfy Org API endpoint"
     required: false
     default: "https://api.comfy.org/upload-artifact"
+  skip_quickci:
+    description: "Skip quickci."
+    required: false
+    default: "true"
 runs:
   using: "composite"
   steps:
@@ -130,7 +134,7 @@ runs:
         python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
 
     - name: '[Unix] Run ComfyUI quick test'
-      if: ${{ inputs.os != 'windows' }}
+      if: ${{ inputs.os != 'windows' && inputs.skip_quick_ci != 'true' }}
       shell: bash -el {0}
       run: |
         python3 main.py --quick-test-for-ci
@@ -294,7 +298,7 @@ runs:
       shell: powershell
 
     - name: '[Win] Run ComfyUI quick test'
-      if: ${{ inputs.os == 'windows' }}
+      if: ${{ inputs.os == 'windows' && inputs.skip_quick_ci != 'true' }}
       shell: powershell
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
