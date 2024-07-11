@@ -86,9 +86,9 @@ runs:
     ############################################################
 
     - name: Set up Node.js (required for using actions/github-script)
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v4
       with:
-        node-version: '14'
+        node-version: '20'
 
     - name: Print Inputs
       uses: actions/github-script@v5
