@@ -94,12 +94,6 @@ runs:
         auto-activate-base: false
         python-version: ${{ inputs.python_version }}
 
-    - name: '[Unix] Activate conda'
-      if: ${{ inputs.os != 'windows' }}
-      run: |
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-      shell: bash -el {0}
-
     - name: '[Unix-Mac-Only] Install Pytorch nightly'
       if: ${{ inputs.os == 'macos' }}
       shell: bash -el {0}
