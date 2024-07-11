@@ -10,13 +10,17 @@ inputs:
     required: false
     default: "3.9"
   cuda_version:
-    description: "CUDA Version. Will be used in the conda install command for pytorch. 11.8 or 12.1. Only valid when os is linux or windows."
+    description: "CUDA Version. Will be used in the conda install command for pytorch."
     required: false
     default: "12.1"
   torch_version:
-    description: "Pytorch Version. Will be used in the conda install command for pytorch. 1.10.0 or 1.11.0. Only valid when os is linux or windows."
+    description: "Pytorch Version type, 'stable', 'nightly', 'specific'"
     required: false
     default: 'stable'
+  specific_torch_install:
+    description: "Command for installing specific torch version. E.g. `conda install bla bla`"
+    required: false
+    default: ''
   models-json:
     description: 'JSON string containing models and their download URLs. The models will be downloaded into the exact directory relative to /ComfyUI/models/. eg { "model_name": { url: "https://example.com/model.pth", "directory": "checkpoints" } }'
     required: false
