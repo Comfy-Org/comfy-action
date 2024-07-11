@@ -169,13 +169,27 @@ runs:
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
-        echo "Running workflows: ${{inputs.workflow_filenames}}"
-        python3 action.py --comfy-workflow-names ${{ inputs.workflow_filenames }} --github-action-workflow-name "${{ github.workflow }}" --os "${{ inputs.os }}" --run-id "${{ github.run_id }}" --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" --workspace-path "${{ github.workspace }}" --output-file-prefix ${{ inputs.output_prefix }} --repo "${{ github.repository }}" --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" --branch-name "${{ github.ref_name }}" --api-endpoint "${{ inputs.api_endpoint }}" ${{ inputs.comfyui_flags }}
+        echo "Running workflows: ${{ inputs.workflow_filenames }}"
+        python3 action.py \
+          --comfy-workflow-names ${{ inputs.workflow_filenames }} \
+          --github-action-workflow-name "${{ github.workflow }}" \
+          --os "${{ inputs.os }}" \
+          --run-id "${{ github.run_id }}" \
+          --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" \
+          --workspace-path "${{ github.workspace }}" \
+          --output-file-prefix ${{ inputs.output_prefix }} \
+          --repo "${{ github.repository }}" \
+          --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" \
+          --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" \
+          --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" \
+          --branch-name "${{ github.ref_name }}" \
+          --api-endpoint "${{ inputs.api_endpoint }}" \
+          ${{ inputs.comfyui_flags }}
 
-    - name: '[Unix] Sleep for 10 minutes on failure'
-      if: ${{ inputs.os != 'windows' && failure() }}
-      shell: "bash"
-      run: sleep 600
+    # - name: '[Unix] Sleep for 10 minutes on failure'
+    #   if: ${{ inputs.os != 'windows' && failure() }}
+    #   shell: "bash"
+    #   run: sleep 600
 
     - name: '[Unix] Upload Output Files'
       uses: actions/upload-artifact@v4
