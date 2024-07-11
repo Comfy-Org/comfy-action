@@ -126,7 +126,7 @@ runs:
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
-        pip3 install -r ${{ github.action_path }} -r requirements.txt
+        pip3 install -r requirements.txt
         python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
 
     - name: '[Unix] Run ComfyUI quick test'
