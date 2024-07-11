@@ -257,7 +257,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch -c nvidia --yes
+        pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
     - name: '[Win] Install dependencies'
       if: ${{ inputs.os == 'windows' }}
