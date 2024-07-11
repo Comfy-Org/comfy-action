@@ -132,7 +132,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        comfy launch -- --quick-test-for-ci
+        python3 main.py --quick-test-for-ci
 
     - name: '[Unix] Run ComfyUI'
       if: ${{ inputs.os != 'windows' }}
