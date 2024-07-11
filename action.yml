@@ -91,7 +91,7 @@ runs:
       with:
         auto-update-conda: true
         miniconda-version: latest
-        activate-environment: gha-comfyui
+        activate-environment: gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         auto-activate-base: false
         python-version: ${{ inputs.python_version }}
 
@@ -239,7 +239,7 @@ runs:
       with:
         auto-update-conda: true
         miniconda-version: latest
-        activate-environment: gha-comfyui
+        activate-environment: gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         python-version: ${{ inputs.python_version }}
       continue-on-error: true
 
@@ -259,7 +259,7 @@ runs:
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
       run: |
-        conda activate gha-comfyui
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         conda info
         conda list
       shell: powershell
@@ -292,7 +292,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       run: |
         cd $Env:GITHUB_ACTION_PATH
-        conda activate gha-comfyui
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         python poll_server_start.py
       shell: powershell
 
