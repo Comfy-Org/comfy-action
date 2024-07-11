@@ -90,6 +90,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       with:
         activate-environment: gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        miniconda-version: "latest"
         auto-activate-base: false
         python-version: ${{ inputs.python_version }}
 
@@ -236,6 +237,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       with:
         activate-environment: gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        miniconda-version: "latest"
         python-version: ${{ inputs.python_version }}
       continue-on-error: true
 
