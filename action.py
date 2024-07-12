@@ -60,21 +60,41 @@ def send_payload_to_api(
     args, output_files_gcs_paths, workflow_name, start_time, end_time
 ):
 
+    is_pr = args.branch_name.endswith("/merge")
+    pr_number = None
+    if is_pr:
+        pr_number = args.branch_name.split("/")[0] 
+
     # Create the payload as a dictionary
+    # Should be mapping to https://github.com/Comfy-Org/registry-backend/blob/main/openapi.yml#L26
     payload = {
         "repo": args.repo,
+        "job_id": args.job_id,
         "run_id": args.run_id,
         "os": args.os,
         "cuda_version": args.cuda_version,
+        "bucket_name": args.gsc_bucket_name,
         "output_files_gcs_paths": output_files_gcs_paths,
+        # TODO: support comfy logs
+        # "comfy_logs_gcs_path": 
         "commit_hash": args.commit_hash,
         "commit_time": args.commit_time,
         "commit_message": args.commit_message,
-        "branch_name": args.branch_name,
-        "bucket_name": args.gsc_bucket_name,
         "workflow_name": workflow_name,
+        "branch_name": args.branch_name,
         "start_time": start_time,
         "end_time": end_time,
+        # TODO: support these metrics
+        # "avg_vram": 0,
+        # "peak_vram": 0,
+        "pr_number": pr_number,
+        # TODO: support PR author
+        # "author": args.,
+        "job_trigger_user": args.job_trigger_user,
+        "comfy_run_flags": args.comfy_run_flags,
+        "python_version": args.python_version,
+        "torch_version": args.torch_version,
+        # "status": "WorkflowRunStatusStarted"
     }
 
     # Convert payload dictionary to a JSON string
@@ -157,8 +177,13 @@ if __name__ == "__main__":
     )
     parser.add_argument("--os", type=str, help="Operating system.")
     parser.add_argument("--run-id", type=str, help="Github Run ID.")
+    parser.add_argument("--job-id", type=str, help="Github Run Job ID.")
+    parser.add_argument("--job-trigger-user", type=str, help="User who triggered the job")
+    parser.add_argument("--comfy-run-flags", type=str, help="Comfy run flags.")
     parser.add_argument("--repo", type=str, help="Github repo.")
     parser.add_argument("--cuda-version", type=str, help="CUDA version.")
+    parser.add_argument("--python-version", type=str, help="Python version.")
+    parser.add_argument("--torch-version", type=str, help="Torch version.")
     parser.add_argument("--commit-hash", type=str, help="Commit hash.")
     parser.add_argument("--commit-time", type=str, help="Commit time.")
     parser.add_argument("--commit-message", type=str, help="Commit message.")

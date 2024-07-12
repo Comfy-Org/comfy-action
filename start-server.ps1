@@ -1,7 +1,7 @@
 # start-server.ps1
 param (
     [String]$GITHUB_WORKSPACE,
-    [String]$PythonFlags,
+    [String]$RunFlags,
     [String]$CondaEnv
 )
 
@@ -12,6 +12,7 @@ conda activate "$CondaEnv"
 
 # Start the web server and redirect output to a log file
 echo "Running Server"
-python "$GITHUB_WORKSPACE/main.py" --force-fp16 *> "$GITHUB_WORKSPACE/application.log"
+echo "python" "$GITHUB_WORKSPACE/main.py" $RunFlags
+python "$GITHUB_WORKSPACE/main.py" $RunFlags *> "$GITHUB_WORKSPACE/application.log"
 
 echo "Done"
