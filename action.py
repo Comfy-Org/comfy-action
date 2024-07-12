@@ -76,7 +76,7 @@ def send_payload_to_api(
     is_pr = args.branch_name.endswith("/merge")
     pr_number = None
     if is_pr:
-        pr_number = args.branch_name.split("/")[0] 
+        pr_number = args.branch_name.split("/")[0]
 
     # Create the payload as a dictionary
     # Should be mapping to https://github.com/Comfy-Org/registry-backend/blob/main/openapi.yml#L26
