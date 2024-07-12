@@ -4,9 +4,17 @@ import json
 import os
 import re
 import subprocess
+from enum import Enum
 
 import requests
 from google.cloud import storage
+
+
+# Reference: https://github.com/Comfy-Org/registry-backend/blob/main/openapi.yml#L2031
+class WfRunStatus(Enum):
+    Started = "WorkflowRunStatusStarted"
+    Failed = "WorkflowRunStatusFailed"
+    Completed = "WorkflowRunStatusCompleted"
 
 
 def read_json_file(file_path):
@@ -57,7 +65,12 @@ def upload_to_gcs(bucket_name: str, destination_blob_name: str, source_file_name
 
 
 def send_payload_to_api(
-    args, output_files_gcs_paths, workflow_name, start_time, end_time
+    args,
+    output_files_gcs_paths,
+    workflow_name,
+    start_time,
+    end_time,
+    status=WfRunStatus.Completed,
 ):
 
     is_pr = args.branch_name.endswith("/merge")
@@ -76,7 +89,7 @@ def send_payload_to_api(
         "bucket_name": args.gsc_bucket_name,
         "output_files_gcs_paths": output_files_gcs_paths,
         # TODO: support comfy logs
-        # "comfy_logs_gcs_path": 
+        # "comfy_logs_gcs_path":
         "commit_hash": args.commit_hash,
         "commit_time": args.commit_time,
         "commit_message": args.commit_message,
@@ -94,7 +107,7 @@ def send_payload_to_api(
         "comfy_run_flags": args.comfy_run_flags,
         "python_version": args.python_version,
         "torch_version": args.torch_version,
-        # "status": "WorkflowRunStatusStarted"
+        "status": status,
     }
 
     # Convert payload dictionary to a JSON string
@@ -130,6 +143,7 @@ def main(args):
     counter = 1
 
     for workflow_file_name in workflow_files:
+        send_payload_to_api(args, "", workflow_file_name, 0, 0, WfRunStatus.Started)
         # Construct the file path
         file_path = f"workflows/{workflow_file_name}"
         print(f"Running workflow {file_path}")
@@ -145,6 +159,14 @@ def main(args):
             )
             print("Output:", result.stdout)
         except subprocess.CalledProcessError as e:
+            send_payload_to_api(
+                args,
+                "",
+                workflow_file_name,
+                start_time,
+                int(datetime.datetime.now().timestamp()),
+                WfRunStatus.Failed,
+            )
             print("Error STD Out:", e.stdout)
             print("Error:", e.stderr)
             raise e
@@ -160,7 +182,14 @@ def main(args):
             f"{args.workspace_path}/output/{args.output_file_prefix}_{counter:05}_.png",
         )
 
-        send_payload_to_api(args, gs_path, workflow_file_name, start_time, end_time)
+        send_payload_to_api(
+            args,
+            gs_path,
+            workflow_file_name,
+            start_time,
+            end_time,
+            WfRunStatus.Completed,
+        )
         counter += 1
 
 
