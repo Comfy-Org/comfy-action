@@ -293,6 +293,16 @@ runs:
         python-version: ${{ inputs.python_version }}
       continue-on-error: true
 
+    # This step is created because the Conda setup step fails everytime.
+    - name: '[Win-Only] Create Conda environment if not exists'
+      if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      run: |
+        if (-not (conda env list | Select-String -Pattern "gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}")) {
+          conda create -n gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }} python=${{ inputs.python_version }} -y
+        }
+
+
     - name: '[Win-Only] Install Pytorch nightly'
       if: ${{ inputs.os == 'windows' && inputs.torch_version == 'nightly'}}
       shell: powershell

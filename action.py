@@ -2,6 +2,7 @@ import argparse
 import datetime
 import json
 import os
+import pprint
 import re
 import subprocess
 from enum import Enum
@@ -107,7 +108,7 @@ def send_payload_to_api(
         "comfy_run_flags": args.comfy_run_flags,
         "python_version": args.python_version,
         "torch_version": args.torch_version,
-        "status": status,
+        "status": status.value,
     }
 
     # Convert payload dictionary to a JSON string
@@ -116,6 +117,10 @@ def send_payload_to_api(
     # Send POST request
     headers = {"Content-Type": "application/json"}
     response = requests.post(args.api_endpoint, headers=headers, data=payload_json)
+    print("#### Payload ####")
+    pprint(payload)
+    print("#### Response ####")
+    pprint(response.json())
 
     # Write response to application.log
     log_file_path = "./application.log"
