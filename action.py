@@ -118,9 +118,9 @@ def send_payload_to_api(
     headers = {"Content-Type": "application/json"}
     response = requests.post(args.api_endpoint, headers=headers, data=payload_json)
     print("#### Payload ####")
-    pprint(payload)
+    pprint.pprint(payload)
     print("#### Response ####")
-    pprint(response.json())
+    pprint.pprint(response.json())
 
     # Write response to application.log
     log_file_path = "./application.log"
