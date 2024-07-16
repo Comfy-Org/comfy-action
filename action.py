@@ -213,7 +213,7 @@ if __name__ == "__main__":
     parser.add_argument("--run-id", type=str, help="Github Run ID.")
     parser.add_argument("--job-id", type=str, help="Github Run Job ID.")
     parser.add_argument("--job-trigger-user", type=str, help="User who triggered the job")
-    parser.add_argument("--comfy-run-flags", type=str, help="Comfy run flags.")
+    parser.add_argument("--comfy-run-flags", default="", type=str, help="Comfy run flags.")
     parser.add_argument("--repo", type=str, help="Github repo.")
     parser.add_argument("--cuda-version", type=str, help="CUDA version.")
     parser.add_argument("--python-version", type=str, help="Python version.")
