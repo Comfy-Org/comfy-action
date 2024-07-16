@@ -151,7 +151,8 @@ def main(args):
     counter = 1
 
     for workflow_file_name in workflow_files:
-        send_payload_to_api(args, "", workflow_file_name, 0, 0, WfRunStatus.Started)
+        gs_path = make_unix_safe(f"output-files/{args.github_action_workflow_name}-{args.os}-{workflow_file_name}-run-{args.run_id}")
+        send_payload_to_api(args, gs_path, workflow_file_name, 0, 0, WfRunStatus.Started)
         # Construct the file path
         file_path = f"workflows/{workflow_file_name}"
         print(f"Running workflow {file_path}")
@@ -169,7 +170,7 @@ def main(args):
         except subprocess.CalledProcessError as e:
             send_payload_to_api(
                 args,
-                "",
+                gs_path,
                 workflow_file_name,
                 start_time,
                 int(datetime.datetime.now().timestamp()),
@@ -183,7 +184,6 @@ def main(args):
         end_time = int(datetime.datetime.now().timestamp())
 
         # TODO: add support for multiple file outputs
-        gs_path = make_unix_safe(f"output-files/{args.github_action_workflow_name}-{args.os}-{workflow_file_name}-run-{args.run_id}")
         upload_to_gcs(
             args.gsc_bucket_name,
             gs_path,
