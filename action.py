@@ -120,7 +120,10 @@ def send_payload_to_api(
     print("#### Payload ####")
     pprint.pprint(payload)
     print("#### Response ####")
-    pprint.pprint(response.json())
+    try:
+        pprint.pprint(response.json())
+    except:
+        print(response.text)
 
     # Write response to application.log
     log_file_path = "./application.log"
