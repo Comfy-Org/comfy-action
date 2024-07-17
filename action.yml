@@ -140,6 +140,7 @@ runs:
       run: |
         which pip3
         pip3 install -r requirements.txt
+        pip3 install -U comfy-cli
 
     - name: '[Unix] Check conda environment'
       if: ${{ inputs.os != 'windows' }}
@@ -339,6 +340,7 @@ runs:
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         pip install -r requirements.txt
+        pip install -U comfy-cli
         conda install google-cloud-storage -y # This is because some fcking how, installing google-cloud-storage using pip has permission error on Windows using python 3.12
 
     - name: "[Win] Check conda environment"
