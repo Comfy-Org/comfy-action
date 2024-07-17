@@ -122,7 +122,7 @@ def send_payload_to_api(
     print("#### Response ####")
     try:
         pprint.pprint(response.json())
-    except:
+    except json.JSONDecodeError:
         print(response.text)
 
     # Write response to application.log

@@ -144,6 +144,12 @@ runs:
     - name: '[Unix] Check conda environment'
       if: ${{ inputs.os != 'windows' }}
       run: |
+        which python
+        echo "#### Python Version ####"
+        python --version
+        echo "#### Pip Version ####"
+        pip --version
+        echo "#### Conda Info Version ####"
         conda info
         conda list
       shell: bash -el {0}
@@ -333,11 +339,18 @@ runs:
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         pip install -r requirements.txt
+        conda install google-cloud-storage -y # This is because some fcking how, installing google-cloud-storage using pip has permission error on Windows using python 3.12
 
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        Get-Command python
+        Write-Output "#### Python Version ####"
+        python --version
+        Write-Output "#### Pip Version ####"
+        pip --version
+        Write-Output "#### Conda Info ####"
         conda info
         conda list
       shell: powershell
