@@ -159,7 +159,16 @@ def main(args):
         start_time = int(datetime.datetime.now().timestamp())
         try:
             result = subprocess.run(
-                ["comfy", "--skip-prompt", "--no-enable-telemetry", "run", "--workflow", file_path],
+                [
+                    "comfy",
+                    "--skip-prompt",
+                    "--no-enable-telemetry",
+                    "run",
+                    "--workflow",
+                    file_path,
+                    "--timeout",
+                    600
+                ],
                 check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
