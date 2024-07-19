@@ -452,7 +452,7 @@ runs:
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       with:
-        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-${{ github.run_id }}
+        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-torch-${{inputs.torch_version}}-${{inputs.cuda_version}}-${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
 
     # - name: '[Win] Sleep for 10 minutes on failure'
