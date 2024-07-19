@@ -108,6 +108,8 @@ runs:
       if: ${{ inputs.os == 'macos' && inputs.torch_version == 'nightly' }}
       shell: bash -el {0}
       run: |
+        conda env list
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         conda install pytorch-nightly::pytorch torchvision torchaudio -c pytorch-nightly
 
     - name: '[Unix-Mac-Only] Install Pytorch stable'
