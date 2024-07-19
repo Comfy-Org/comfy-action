@@ -167,7 +167,7 @@ def main(args):
                     "--workflow",
                     file_path,
                     "--timeout",
-                    600 # 10min timeout for workflow
+                    "600" # 10min timeout for workflow
                 ],
                 check=True,
                 stdout=subprocess.PIPE,
