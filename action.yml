@@ -102,6 +102,7 @@ runs:
         miniconda-version: "latest"
         auto-activate-base: false
         python-version: ${{ inputs.python_version }}
+      continue-on-error: true
 
     - name: '[Unix-Mac-Only] Install Pytorch nightly'
       if: ${{ inputs.os == 'macos' && inputs.torch_version == 'nightly' }}
