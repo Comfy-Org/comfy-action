@@ -147,9 +147,9 @@ runs:
       shell: bash -el {0}
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        which pip3
-        pip3 install -r requirements.txt
-        pip3 install -U comfy-cli
+        which pip
+        pip install -r requirements.txt
+        pip install -U comfy-cli
 
     - name: '[Unix] Check conda environment'
       if: ${{ inputs.os != 'windows' }}
@@ -171,7 +171,8 @@ runs:
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         cd ${{ github.action_path }}
-        pip3 install -r requirements.txt
+        which pip
+        pip install -r requirements.txt
         python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
 
     - name: '[Unix] Run ComfyUI quick test'
@@ -331,7 +332,7 @@ runs:
       shell: powershell
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        Get-Command pip
+        Get-Command pip3
         pip3 install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
 
     - name: '[Win-Only] Install Pytorch stable'
@@ -339,7 +340,7 @@ runs:
       shell: powershell
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        Get-Command pip
+        Get-Command pip3
         pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
     
     - name: '[Win] Install Pytorch specific version'
