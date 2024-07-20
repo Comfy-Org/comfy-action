@@ -124,18 +124,21 @@ runs:
       if: ${{ inputs.os == 'linux' && inputs.torch_version == 'nightly' }}
       shell: bash -el {0}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch-nightly -c nvidia
 
     - name: '[Unix-Linux-Only] Install Pytorch stable'
       if: ${{ inputs.os == 'linux' && inputs.torch_version == 'stable' }}
       shell: bash -el {0}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version}} -c pytorch -c nvidia
 
     - name: '[Unix] Install Pytorch specific version'
       if: ${{ inputs.os == 'macos' && inputs.torch_version == 'specific' }}
       shell: bash -el {0}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         echo "Run specific torch install command"
         ${{ inputs.specific_torch_install }}
 
@@ -143,13 +146,16 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         which pip3
         pip3 install -r requirements.txt
         pip3 install -U comfy-cli
 
     - name: '[Unix] Check conda environment'
       if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         which python
         echo "#### Python Version ####"
         python --version
@@ -158,12 +164,12 @@ runs:
         echo "#### Conda Info Version ####"
         conda info
         conda list
-      shell: bash -el {0}
 
     - name: '[Unix] Download models'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         cd ${{ github.action_path }}
         pip3 install -r requirements.txt
         python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
@@ -172,17 +178,20 @@ runs:
       if: ${{ inputs.os != 'windows' && inputs.skip_quick_ci != 'true' }}
       shell: bash -el {0}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         python3 main.py --quick-test-for-ci
 
     - name: '[Unix] Run ComfyUI'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         python3 main.py ${{inputs.comfyui_flags}} > application.log 2>&1 &
 
     - name: '[Unix] Check if the server is running'
       if: ${{ inputs.os != 'windows' }}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         cd ${{ github.action_path }}
         python3 poll_server_start.py > application.log 2>&1
       shell: bash -el {0}
@@ -192,6 +201,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         TIMESTAMP=$(git show -s --format=%cI HEAD^)
         MESSAGE=$(git show -s --format=%s HEAD^)
         COMMIT_HASH=$(git rev-parse HEAD^)
@@ -207,6 +217,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         cd ${{ github.action_path }}
         echo "Running workflows: ${{ inputs.workflow_filenames }}"
         python3 action.py \
