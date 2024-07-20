@@ -251,7 +251,7 @@ runs:
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       with:
-        name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-torch-${{inputs.torch_version}}-${{inputs.cuda_version}}-${{ github.run_id }}
+        name: output-files-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
         path: ${{ github.workspace }}/output/**
 
     - name: '[Unix] Upload log file to GCS'
@@ -260,13 +260,13 @@ runs:
       uses: google-github-actions/upload-cloud-storage@v2
       with:
         path: ${{ github.workspace }}/application.log
-        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
 
     - name: '[Unix] Upload log file'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       uses: actions/upload-artifact@v4
       with:
-        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-torch-${{inputs.torch_version}}-${{inputs.cuda_version}}-${{ github.run_id }}
+        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
 
     - name: '[Unix] Cleanup output files only'
@@ -454,7 +454,7 @@ runs:
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       with:
-        name: output-files-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-torch-${{inputs.torch_version}}-${{inputs.cuda_version}}-${{ github.run_id }}
+        name: output-files-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
         path: ${{ github.workspace }}/output/**
 
     - name: '[Win] Upload log file to GCS'
@@ -463,13 +463,13 @@ runs:
       uses: google-github-actions/upload-cloud-storage@v2
       with:
         path: ${{ github.workspace }}/application.log
-        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
 
     - name: '[Win] Upload log file'
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       with:
-        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{inputs.workflow_name}}-torch-${{inputs.torch_version}}-${{inputs.cuda_version}}-${{ github.run_id }}
+        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
 
     # - name: '[Win] Sleep for 10 minutes on failure'
