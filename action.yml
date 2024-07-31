@@ -389,6 +389,8 @@ runs:
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
+        Write-Output "(Temporary) fixing torch nightly bug"
+        python $Env:GITHUB_WORKSPACE/fix_torch.py
 
     - name: '[Win] Run ComfyUI'
       if: ${{ inputs.os == 'windows' }}
