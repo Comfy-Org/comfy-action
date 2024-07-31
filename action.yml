@@ -450,6 +450,7 @@ runs:
           --branch-name "${{ github.ref_name }}" `
           --api-endpoint "${{ inputs.api_endpoint }}"
         (Get-ChildItem -Force -Path "${{ github.workspace }}/output").FullName
+        cat "${{ github.workspace }}/application.log"
     # Note the Get-ChildItem mess is powershell for "ls -la" for debug
 
     - name: '[Win] Upload Output Files'
