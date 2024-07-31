@@ -96,7 +96,7 @@ runs:
 
     - name: '[Unix] Setup Conda'
       uses: conda-incubator/setup-miniconda@v3.0.3
-      if: ${{ inputs.os != 'windows' }}
+      if: ${{ inputs.os != 'windows' && hashFiles('${{ env.HOME }}/miniconda3/envs/gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}/bin/pip') == '' }}
       with:
         activate-environment: gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         miniconda-version: "latest"
