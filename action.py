@@ -133,19 +133,51 @@ def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time,
     return response.status_code
 
 
+def parse_raw_output(full_output):
+    """
+        This is a hack, because we're not calling the Comfy JSON API directly, we need to reparse the output list from the Comfy-CLI text dump.
+        TODO: Comfy-CLI should be able to yield usable JSONs directly instead of this cursed manual parse
+    """
+    outputs_start = full_output.find('Outputs:')
+    if outputs_start == -1:
+        return None
+
+    output = full_output[outputs_start + len('Outputs:'):].replace('\r', '\n').strip()
+
+    outputnl = output.find('\n')
+    if outputnl != -1:
+        output = output[:outputnl]
+
+    lines = output.split('\n')
+    lines = [line.strip() for line in lines if line.strip()]
+
+    filenames = []
+    for line in lines:
+        fnind = line.find('filename=')
+        if fnind == -1:
+            continue
+        fnstart = fnind + len('filename=')
+        fnend = line.find('&', fnstart)
+        if fnend == -1:
+            fnend = len(line)
+        filenames.append(line[fnstart:fnend])
+
+    return filenames
+
+
 def main(args):
     # Split the workflow file names using ","
     workflow_files = args.comfy_workflow_names.split(",")
-    print("Running workflows ")
-    counter = 1
+    print("Running workflows")
 
     for workflow_file_name in workflow_files:
         gs_path = make_unix_safe(f"output-files/{args.github_action_workflow_name}-{args.os}-{args.python_version}-{args.cuda_version}-{args.torch_version}-{workflow_file_name}-run-{args.run_id}")
         send_payload_to_api(args, gs_path, workflow_file_name, 0, 0, WfRunStatus.Started)
-        # Construct the file path
         file_path = f"workflows/{workflow_file_name}"
+
         print(f"Running workflow {file_path}")
         start_time = int(datetime.datetime.now().timestamp())
+        output_filenames = []
         try:
             result = subprocess.run(
                 [
@@ -160,7 +192,12 @@ def main(args):
                 text=True,
                 env=os.environ,
             )
-            print("Output:", result.stdout)
+
+            full_output = f"{result.stdout}"
+            print(f"stdout: {full_output}")
+            print(f"stderr: {e.stderr}")
+            output_filenames = parse_raw_output(full_output)
+
         except subprocess.CalledProcessError as e:
             send_payload_to_api(args, gs_path, workflow_file_name, start_time, int(datetime.datetime.now().timestamp()), WfRunStatus.Failed)
             print("Error STD Out:", e.stdout)
@@ -170,22 +207,10 @@ def main(args):
         print(f"Workflow {file_path} completed")
         end_time = int(datetime.datetime.now().timestamp())
 
-        # TODO: add support for multiple file outputs
-        upload_to_gcs(
-            args.gsc_bucket_name,
-            gs_path,
-            f"{args.workspace_path}/output/{args.output_file_prefix}_{counter:05}_.png",
-        )
+        for filename in output_filenames:
+            upload_to_gcs(args.gsc_bucket_name, gs_path, f"{args.workspace_path}/output/{filename}")
 
-        send_payload_to_api(
-            args,
-            gs_path,
-            workflow_file_name,
-            start_time,
-            end_time,
-            WfRunStatus.Completed,
-        )
-        counter += 1
+        send_payload_to_api(args, gs_path, workflow_file_name, start_time, end_time, WfRunStatus.Completed)
 
 
 if __name__ == "__main__":
