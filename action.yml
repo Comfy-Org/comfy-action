@@ -94,15 +94,15 @@ runs:
       with:
         credentials_json: "${{ inputs.google_credentials }}"
 
-    - name: '[Unix] Setup Conda'
-      uses: conda-incubator/setup-miniconda@v3.0.3
-      if: ${{ inputs.os != 'windows' && hashFiles('${{ env.HOME }}/miniconda3/envs/gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}/bin/pip') == '' }}
-      with:
-        activate-environment: gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        miniconda-version: "latest"
-        auto-activate-base: false
-        python-version: ${{ inputs.python_version }}
-      continue-on-error: true
+    # - name: '[Unix] Setup Conda'
+    #   uses: conda-incubator/setup-miniconda@v3.0.3
+    #   if: ${{ inputs.os != 'windows' && hashFiles('${{ env.HOME }}/miniconda3/envs/gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}/bin/pip') == '' }}
+    #   with:
+    #     activate-environment: gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+    #     miniconda-version: "latest"
+    #     auto-activate-base: false
+    #     python-version: ${{ inputs.python_version }}
+    #   continue-on-error: true
 
     - name: '[Unix-Mac-Only] Install Pytorch nightly'
       if: ${{ inputs.os == 'macos' && inputs.torch_version == 'nightly' }}
