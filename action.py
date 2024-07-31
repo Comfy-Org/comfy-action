@@ -54,9 +54,7 @@ def is_completed(status_response, prompt_id):
 
 
 def upload_to_gcs(bucket_name: str, destination_blob_name: str, source_file_name: str):
-    print(
-        f"Uploading file {source_file_name} to GCS bucket {bucket_name} as {destination_blob_name}"
-    )
+    print(f"Uploading file {source_file_name} to GCS bucket {bucket_name} as {destination_blob_name}")
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(bucket_name)
 
@@ -65,14 +63,7 @@ def upload_to_gcs(bucket_name: str, destination_blob_name: str, source_file_name
     print(f"File {source_file_name} uploaded to {destination_blob_name}")
 
 
-def send_payload_to_api(
-    args,
-    output_files_gcs_paths,
-    workflow_name,
-    start_time,
-    end_time,
-    status=WfRunStatus.Completed,
-):
+def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time, end_time, status=WfRunStatus.Completed):
 
     is_pr = args.branch_name.endswith("/merge")
     pr_number = None
@@ -133,9 +124,7 @@ def send_payload_to_api(
 
     # Check the response code
     if response.status_code != 200:
-        print(
-            f"API request failed with status code {response.status_code} and response body"
-        )
+        print(f"API request failed with status code {response.status_code} and response body")
         print(response.text)
         exit(1)
     else:
@@ -160,14 +149,10 @@ def main(args):
         try:
             result = subprocess.run(
                 [
-                    "comfy",
-                    "--skip-prompt",
-                    "--no-enable-telemetry",
+                    "comfy", "--skip-prompt", "--no-enable-telemetry",
                     "run",
-                    "--workflow",
-                    file_path,
-                    "--timeout",
-                    "600" # 10min timeout for workflow
+                    "--workflow", file_path,
+                    "--timeout", "600" # 10min timeout for workflow
                 ],
                 check=True,
                 stdout=subprocess.PIPE,
@@ -177,14 +162,7 @@ def main(args):
             )
             print("Output:", result.stdout)
         except subprocess.CalledProcessError as e:
-            send_payload_to_api(
-                args,
-                gs_path,
-                workflow_file_name,
-                start_time,
-                int(datetime.datetime.now().timestamp()),
-                WfRunStatus.Failed,
-            )
+            send_payload_to_api(args, gs_path, workflow_file_name, start_time, int(datetime.datetime.now().timestamp()), WfRunStatus.Failed)
             print("Error STD Out:", e.stdout)
             print("Error:", e.stderr)
             raise e
@@ -211,16 +189,10 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Send a JSON file contents to a server as a prompt."
-    )
+    parser = argparse.ArgumentParser(description="Send a JSON file contents to a server as a prompt.")
     parser.add_argument("--api-endpoint", type=str, help="API endpoint.")
-    parser.add_argument(
-        "--comfy-workflow-names", type=str, help="List of comfy workflow names."
-    )
-    parser.add_argument(
-        "--github-action-workflow-name", type=str, help="Github action workflow name."
-    )
+    parser.add_argument("--comfy-workflow-names", type=str, help="List of comfy workflow names.")
+    parser.add_argument("--github-action-workflow-name", type=str, help="Github action workflow name.")
     parser.add_argument("--os", type=str, help="Operating system.")
     parser.add_argument("--run-id", type=str, help="Github Run ID.")
     parser.add_argument("--job-id", type=str, help="Github Run Job ID.")
@@ -234,21 +206,9 @@ if __name__ == "__main__":
     parser.add_argument("--commit-time", type=str, help="Commit time.")
     parser.add_argument("--commit-message", type=str, help="Commit message.")
     parser.add_argument("--branch-name", type=str, help="Branch name.")
-    parser.add_argument(
-        "--gsc-bucket-name",
-        type=str,
-        help="Name of the GCS bucket to store the output files in.",
-    )
-    parser.add_argument(
-        "--workspace-path",
-        type=str,
-        help="Workspace (ComfyUI repo) path, likely ${HOME}/action_runners/_work/ComfyUI/ComfyUI/.",
-    )
-    parser.add_argument(
-        "--action-path",
-        type=str,
-        help="Action path., likely ${HOME}/action_runners/_work/comfy-action/.",
-    )
+    parser.add_argument("--gsc-bucket-name", type=str, help="Name of the GCS bucket to store the output files in.")
+    parser.add_argument("--workspace-path", type=str, help="Workspace (ComfyUI repo) path, likely ${HOME}/action_runners/_work/ComfyUI/ComfyUI/.")
+    parser.add_argument("--action-path", type=str, help="Action path., likely ${HOME}/action_runners/_work/comfy-action/.")
     parser.add_argument("--output-file-prefix", type=str, help="Output file prefix.")
 
     args = parser.parse_args()
