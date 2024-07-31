@@ -448,7 +448,7 @@ runs:
           --commit-time "${{ steps.win_get_commit_details.outputs.commit_time }}" `
           --commit-message "${{ steps.win_get_commit_details.outputs.commit_title }}" `
           --branch-name "${{ github.ref_name }}" `
-          --api-endpoint "${{ inputs.api_endpoint }}" `
+          --api-endpoint "${{ inputs.api_endpoint }}"
         (Get-ChildItem -Force -Path "${{ github.workspace }}/output").FullName
     # Note the Get-ChildItem mess is powershell for "ls -la" for debug
 
