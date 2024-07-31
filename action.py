@@ -195,7 +195,7 @@ def main(args):
 
             full_output = f"{result.stdout}"
             print(f"stdout: {full_output}")
-            print(f"stderr: {e.stderr}")
+            print(f"stderr: {result.stderr}")
             output_filenames = parse_raw_output(full_output)
 
         except subprocess.CalledProcessError as e:
