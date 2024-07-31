@@ -114,7 +114,7 @@ def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time,
     try:
         pprint.pprint(response.json())
     except json.JSONDecodeError:
-        print(response.text)
+        print(f"Invalid JSON: {response.text}")
 
     # Write response to application.log
     log_file_path = "./application.log"
@@ -169,6 +169,7 @@ def main(args):
     # Split the workflow file names using ","
     workflow_files = args.comfy_workflow_names.split(",")
     print("Running workflows")
+    counter = 1
 
     for workflow_file_name in workflow_files:
         gs_path = make_unix_safe(f"output-files/{args.github_action_workflow_name}-{args.os}-{args.python_version}-{args.cuda_version}-{args.torch_version}-{workflow_file_name}-run-{args.run_id}")
@@ -197,6 +198,10 @@ def main(args):
             print(f"stdout: {full_output}")
             print(f"stderr: {result.stderr}")
             output_filenames = parse_raw_output(full_output)
+            if output_filenames is None:
+                if not os.path.exists(f"{args.workspace_path}/output/{args.output_file_prefix}_{counter:05}_.png"):
+                    raise RuntimeError("Invalid output from Comfy-CLI, no outputs found")
+                output_filenames = [f"{args.output_file_prefix}_{counter:05}_.png"]
 
         except subprocess.CalledProcessError as e:
             send_payload_to_api(args, gs_path, workflow_file_name, start_time, int(datetime.datetime.now().timestamp()), WfRunStatus.Failed)
@@ -211,6 +216,7 @@ def main(args):
             upload_to_gcs(args.gsc_bucket_name, gs_path, f"{args.workspace_path}/output/{filename}")
 
         send_payload_to_api(args, gs_path, workflow_file_name, start_time, end_time, WfRunStatus.Completed)
+        counter += 1
 
 
 if __name__ == "__main__":
