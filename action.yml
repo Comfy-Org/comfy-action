@@ -32,6 +32,10 @@ inputs:
     description: "Flags to pass to the comfyui application. eg. --force-fp16"
     required: false
     default: ''
+  use_prior_commit:
+    description: "Specify 'true' to use the prior commit, or 'false' to use the current commit."
+    required: false
+    default: 'false'
   # Not yet supported
   workflow_raw_json:
     description: "Workflow's raw json file"
@@ -204,9 +208,13 @@ runs:
       shell: bash -el {0}
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        TIMESTAMP=$(git show -s --format=%cI HEAD^)
-        MESSAGE=$(git show -s --format=%s HEAD^)
-        COMMIT_HASH=$(git rev-parse HEAD^)
+        if [ "${{ inputs.use_prior_commit }}" == "true" ]; then
+          COMMIT_HASH=$(git rev-parse HEAD^)
+        else
+          COMMIT_HASH=$(git rev-parse HEAD)
+        fi
+        TIMESTAMP=$(git show -s --format=%cI $COMMIT_HASH)
+        MESSAGE=$(git show -s --format=%s $COMMIT_HASH)
         echo "Commit time: $TIMESTAMP"
         echo "Commit title: $MESSAGE"
         echo "Commit hash: $COMMIT_HASH"
@@ -417,9 +425,13 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        $timestamp = git show -s --format=%cI HEAD^
-        $message = git show -s --format=%s HEAD^
-        $commit_hash = git rev-parse HEAD^
+        if (${{ inputs.use_prior_commit }} -eq "true") {
+          $commit_hash = git rev-parse HEAD^
+        } else {
+          $commit_hash = git rev-parse HEAD
+        }
+        $timestamp = git show -s --format=%cI $commit_hash
+        $message = git show -s --format=%s $commit_hash
         "commit_time=$timestamp" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
         "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
         "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
