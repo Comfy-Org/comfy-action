@@ -23,6 +23,10 @@ MODELS = {
         "url": "https://huggingface.co/mcmonkey/google_t5-v1_1-xxl_encoderonly/resolve/50d42fdb91a03fb7b6d2b9f395bbaa11482086c9/t5xxl_fp8_e4m3fn.safetensors",
         "hash": "7d330da4816157540d6bb7838bf63a0f02f573fc48ca4d8de34bb0cbfd514f09"
     },
+    "checkpoints/sd_xl_base_1.0.safetensors": {
+        "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors",
+        "hash": "31e35c80fc4829d14f90153f4c74cd59c90b779f6afe05a74cd6120b893f7e5b"
+    },
     # SD3 gate blocks autodownload, but HF allows this other to stay up - the hash check will verify nothing weird happened
     "checkpoints/sd3_medium.safetensors": {
         "url": "https://huggingface.co/adamo1139/stable-diffusion-3-medium-ungated/resolve/74b6131496fceb9f896c2e3d6465c2241ea22ae6/sd3_medium.safetensors",
