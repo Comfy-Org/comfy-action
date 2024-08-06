@@ -41,14 +41,14 @@ inputs:
     required: false
     default: "600"
   google_credentials:
-    description: "Service Account JSON for uploading to GCS. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
+    description: "Service Account JSON for uploading to GCS. Required if you want results uploaded to CI dashboard. https://ci.comfy.org"
     required: false
   gcs_bucket_name:
-    description: "Name of the GCS bucket to upload the output files to. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
+    description: "Name of the GCS bucket to upload the output files to. Required if you want results uploaded to CI dashboard. https://ci.comfy.org"
     required: false
     default: "comfy-ci-results"
   output_prefix:
-    description: "Prefix for the output files. Required if you want results uploaded to CI dashboard. http://www.comfyci.org"
+    description: "Prefix for the output files. Required if you want results uploaded to CI dashboard. https://ci.comfy.org"
     required: false
     default: "ComfyUI"
   api_endpoint:
