@@ -26,7 +26,8 @@ inputs:
     required: false
   workflow_filenames:
     description: "The list of workflow filenames is listed in the workflows/ directory. Separate by comma, e.g., 'workflow1.json,workflow2.json'."
-    required: true
+    required: false
+    default: 'default.json,lora.json'
   comfyui_flags:
     description: "Flags to pass to the comfyui application. eg. --force-fp16"
     required: false
