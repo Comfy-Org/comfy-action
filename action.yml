@@ -233,7 +233,7 @@ runs:
           --workspace-path "${{ github.workspace }}" \
           --output-file-prefix ${{ inputs.output_prefix }} \
           --repo "${{ github.repository }}" \
-          --comfy-run-flags "${{ inputs.comfyui_flags }}" \
+          --comfy-run-flags "'${{ inputs.comfyui_flags }}'" \
           --python-version "${{ inputs.python_version }}" \
           --torch-version "${{ inputs.torch_version }}" \
           --cuda-version "${{ inputs.cuda_version }}" \
@@ -429,7 +429,7 @@ runs:
           --workspace-path "${{ github.workspace }}" `
           --output-file-prefix "${{ inputs.output_prefix }}" `
           --repo "${{ github.repository }}" `
-          --comfy-run-flags "${{ inputs.comfyui_flags }}" `
+          --comfy-run-flags "'${{ inputs.comfyui_flags }}'" `
           --python-version "${{ inputs.python_version }}" `
           --torch-version "${{ inputs.torch_version }}" `
           --cuda-version "${{ inputs.cuda_version }}" `
