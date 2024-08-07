@@ -425,7 +425,7 @@ runs:
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
-        if (${{ inputs.use_prior_commit }} -eq "true") {
+        if ( "${{ inputs.use_prior_commit }}" -eq "true" ) {
           $commit_hash = git rev-parse HEAD^
         } else {
           $commit_hash = git rev-parse HEAD
