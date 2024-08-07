@@ -202,8 +202,8 @@ runs:
         python3 poll_server_start.py > application.log 2>&1
       shell: bash -el {0}
 
-    - name: '[Unix] Get Commit Details'
-      id: unix_get_commit_details
+    - name: '[Unix] Get Details and Run Python Action'
+      id: unix_action
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
@@ -222,11 +222,6 @@ runs:
         echo "commit_title=$MESSAGE" >> $GITHUB_OUTPUT
         echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
-    - name: '[Unix] Run Python Action'
-      id: unix_action
-      if: ${{ inputs.os != 'windows' }}
-      shell: bash -el {0}
-      run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         cd ${{ github.action_path }}
         echo "Running workflows: ${{ inputs.workflow_filenames }}"
@@ -245,9 +240,9 @@ runs:
           --python-version "${{ inputs.python_version }}" \
           --torch-version "${{ inputs.torch_version }}" \
           --cuda-version "${{ inputs.cuda_version }}" \
-          --commit-hash "${{ steps.unix_get_commit_details.outputs.commit_hash }}" \
-          --commit-time "${{ steps.unix_get_commit_details.outputs.commit_time }}" \
-          --commit-message "${{ steps.unix_get_commit_details.outputs.commit_title }}" \
+          --commit-hash "$COMMIT_HASH" \
+          --commit-time "$TIMESTAMP" \
+          --commit-message "$MESSAGE" \
           --branch-name "${{ github.ref_name }}" \
           --api-endpoint "${{ inputs.api_endpoint }}"
 
@@ -420,8 +415,8 @@ runs:
         python poll_server_start.py
       shell: powershell
 
-    - name: '[Win] Get Commit Details'
-      id: win_get_commit_details
+    - name: '[Win] Get Details and Run Python Action'
+      id: windows_action
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
       run: |
@@ -436,11 +431,6 @@ runs:
         "commit_title=$message" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
         "commit_hash=$commit_hash" | Out-File -FilePath $Env:GITHUB_OUTPUT -Append
 
-    - name: '[Win] Run Python Action'
-      id: windows_action
-      if: ${{ inputs.os == 'windows' }}
-      shell: powershell
-      run: |
         cd $Env:GITHUB_ACTION_PATH
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         Write-Host "Running workflows: ${{ inputs.workflow_filenames }}"
@@ -459,9 +449,9 @@ runs:
           --python-version "${{ inputs.python_version }}" `
           --torch-version "${{ inputs.torch_version }}" `
           --cuda-version "${{ inputs.cuda_version }}" `
-          --commit-hash "${{ steps.win_get_commit_details.outputs.commit_hash }}" `
-          --commit-time "${{ steps.win_get_commit_details.outputs.commit_time }}" `
-          --commit-message "${{ steps.win_get_commit_details.outputs.commit_title }}" `
+          --commit-hash "$commit_hash" `
+          --commit-time "$timestamp" `
+          --commit-message "$message" `
           --branch-name "${{ github.ref_name }}" `
           --api-endpoint "${{ inputs.api_endpoint }}"
         (Get-ChildItem -Force -Path "${{ github.workspace }}/output").FullName
@@ -489,11 +479,6 @@ runs:
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
-
-    # - name: '[Win] Sleep for 10 minutes on failure'
-    #   if: ${{ inputs.os == 'windows' && failure() }}
-    #   shell: powershell
-    #   run: Start-Sleep -Seconds 600
 
     - name: '[Win] Cleanup output files only'
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
