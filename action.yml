@@ -243,11 +243,6 @@ runs:
           --branch-name "${{ github.ref_name }}" \
           --api-endpoint "${{ inputs.api_endpoint }}"
 
-    # - name: '[Unix] Sleep for 10 minutes on failure'
-    #   if: ${{ inputs.os != 'windows' && failure() }}
-    #   shell: "bash"
-    #   run: sleep 600
-
     - name: '[Unix] Upload Output Files'
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
@@ -274,11 +269,6 @@ runs:
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       shell: bash -el {0}
       run: rm -rf ${{ github.workspace }}/*
-
-    # - name: '[Unix] Cleanup Conda'
-    #   if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
-    #   shell: bash -el {0}
-    #   run: conda deactivate && conda env remove --name comfyui && conda clean -all
 
 
     #####################################################################################
