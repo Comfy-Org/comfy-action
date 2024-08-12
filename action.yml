@@ -213,8 +213,6 @@ runs:
         else
           COMMIT_HASH=$(git rev-parse HEAD)
         fi
-        TIMESTAMP=$(git show -s --format=%cI $COMMIT_HASH)
-        MESSAGE=$(git show -s --format=%s $COMMIT_HASH)
         echo "Commit time: $TIMESTAMP"
         echo "Commit title: $MESSAGE"
         echo "Commit hash: $COMMIT_HASH"
@@ -222,7 +220,12 @@ runs:
         PRNUMBER="${{ github.event.pull_request.number }}"
         if [ -n "$PRNUMBER" ]; then
           BRANCH_NAME="$PRNUMBER/merge"
+          git fetch upstream pull/$PRNUMBER/head
+          git checkout FETCH_HEAD
+          COMMIT_HASH=$(git rev-parse HEAD)
         fi
+        TIMESTAMP=$(git show -s --format=%cI $COMMIT_HASH)
+        MESSAGE=$(git show -s --format=%s $COMMIT_HASH)
 
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         cd ${{ github.action_path }}
@@ -417,13 +420,16 @@ runs:
         } else {
           $commit_hash = git rev-parse HEAD
         }
-        $timestamp = git show -s --format=%cI $commit_hash
-        $message = git show -s --format=%s $commit_hash
         $branch_name = "${{ github.ref_name }}"
         $pr_number = "${{ github.event.pull_request.number }}"
         if ( $pr_number -ne "" ) {
           $branch_name = "$pr_number/merge"
+          git fetch upstream pull/$pr_number/head
+          git checkout FETCH_HEAD
+          $commit_hash = git rev-parse HEAD
         }
+        $timestamp = git show -s --format=%cI $commit_hash
+        $message = git show -s --format=%s $commit_hash
 
         cd $Env:GITHUB_ACTION_PATH
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
