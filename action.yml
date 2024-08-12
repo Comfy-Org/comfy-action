@@ -220,7 +220,7 @@ runs:
         PRNUMBER="${{ github.event.pull_request.number }}"
         if [ -n "$PRNUMBER" ]; then
           BRANCH_NAME="$PRNUMBER/merge"
-          git fetch upstream pull/$PRNUMBER/head
+          git fetch origin pull/$PRNUMBER/head
           git checkout FETCH_HEAD
           COMMIT_HASH=$(git rev-parse HEAD)
         fi
@@ -424,7 +424,7 @@ runs:
         $pr_number = "${{ github.event.pull_request.number }}"
         if ( $pr_number -ne "" ) {
           $branch_name = "$pr_number/merge"
-          git fetch upstream pull/$pr_number/head
+          git fetch origin pull/$pr_number/head
           git checkout FETCH_HEAD
           $commit_hash = git rev-parse HEAD
         }
