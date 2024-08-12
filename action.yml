@@ -218,6 +218,11 @@ runs:
         echo "Commit time: $TIMESTAMP"
         echo "Commit title: $MESSAGE"
         echo "Commit hash: $COMMIT_HASH"
+        BRANCH_NAME="${{ github.ref_name }}"
+        PRNUMBER="${{ github.event.pull_request.number }}"
+        if [ -n "$PRNUMBER" ]; then
+          BRANCH_NAME="$PRNUMBER/merge"
+        fi
 
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         cd ${{ github.action_path }}
@@ -240,7 +245,7 @@ runs:
           --commit-hash "$COMMIT_HASH" \
           --commit-time "$TIMESTAMP" \
           --commit-message "$MESSAGE" \
-          --branch-name "${{ github.ref_name }}" \
+          --branch-name "$BRANCH_NAME" \
           --api-endpoint "${{ inputs.api_endpoint }}"
 
     - name: '[Unix] Upload Output Files'
@@ -414,6 +419,11 @@ runs:
         }
         $timestamp = git show -s --format=%cI $commit_hash
         $message = git show -s --format=%s $commit_hash
+        $branch_name = "${{ github.ref_name }}"
+        $pr_number = "${{ github.event.pull_request.number }}"
+        if ( $pr_number -ne "" ) {
+          $branch_name = "$pr_number/merge"
+        }
 
         cd $Env:GITHUB_ACTION_PATH
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
@@ -436,7 +446,7 @@ runs:
           --commit-hash "$commit_hash" `
           --commit-time "$timestamp" `
           --commit-message "$message" `
-          --branch-name "${{ github.ref_name }}" `
+          --branch-name "$branch_name" `
           --api-endpoint "${{ inputs.api_endpoint }}"
         (Get-ChildItem -Force -Path "${{ github.workspace }}/output").FullName
         cat "${{ github.workspace }}/application.log"
