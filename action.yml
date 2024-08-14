@@ -130,7 +130,8 @@ runs:
       shell: bash -el {0}
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch-nightly -c nvidia
+        #conda install pytorch torchvision torchaudio pytorch-cuda=${{ inputs.cuda_version }} -c pytorch-nightly -c nvidia
+        pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
 
     - name: '[Unix-Linux-Only] Install Pytorch stable'
       if: ${{ inputs.os == 'linux' && inputs.torch_version == 'stable' }}
