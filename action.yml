@@ -432,6 +432,12 @@ runs:
         $timestamp = git show -s --format=%cI $commit_hash
         $message = git show -s --format=%s $commit_hash
 
+        # Special cleanup/escape for variable names
+        $branch_name = $branch_name -replace '"', '\"'
+        $message = $message -replace '"', '\"'
+        $actor = "${{ github.actor }}"
+        $actor = $actor -replace '"', '\"'
+
         cd $Env:GITHUB_ACTION_PATH
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         Write-Host "Running workflows: ${{ inputs.workflow_filenames }}"
@@ -441,7 +447,7 @@ runs:
           --os "${{ inputs.os }}" `
           --run-id "${{ github.run_id }}" `
           --job-id "${{ github.job }}" `
-          --job-trigger-user "${{ github.actor }}" `
+          --job-trigger-user $actor `
           --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" `
           --workspace-path "${{ github.workspace }}" `
           --output-file-prefix "${{ inputs.output_prefix }}" `
@@ -452,8 +458,8 @@ runs:
           --cuda-version "${{ inputs.cuda_version }}" `
           --commit-hash "$commit_hash" `
           --commit-time "$timestamp" `
-          --commit-message "$message" `
-          --branch-name "$branch_name" `
+          --commit-message $message `
+          --branch-name $branch_name `
           --api-endpoint "${{ inputs.api_endpoint }}"
         (Get-ChildItem -Force -Path "${{ github.workspace }}/output").FullName
         cat "${{ github.workspace }}/application.log"
