@@ -109,7 +109,7 @@ def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time,
 
     local_machine_stats = machine_stats.copy()
 
-    local_machine_stats["vram_time_series"] = [f"{int(v)} MiB" for v in vram_time_series]
+    local_machine_stats["vram_time_series"] = {f"{i}": f"{int(vram_time_series[i])} MiB" for o in range(len(vram_time_series))}
     avg_vram = 0
     peak_vram = 0
     if -1 in vram_time_series:
