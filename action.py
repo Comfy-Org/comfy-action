@@ -1,4 +1,4 @@
-import argparse, datetime, json, os, sys, pprint, re, subprocess, requests, platform, psutil, GPUtil, traceback, threading, time
+import argparse, datetime, json, os, sys, pprint, re, subprocess, requests, platform, psutil, traceback, threading, time
 from enum import Enum
 from google.cloud import storage
 
@@ -9,10 +9,18 @@ class WfRunStatus(Enum):
     Failed = "WorkflowRunStatusFailed"
     Completed = "WorkflowRunStatusCompleted"
 
+def get_gpu():
+    try:
+        import GPUtil
+        gpus = GPUtil.getGPUs()
+        return gpus[0] if gpus else None
+    except:
+        return None
+
 def get_gpu_info():
     try:
-        gpus = GPUtil.getGPUs()
-        return gpus[0].name if gpus else "No GPU detected"
+        gpu = get_gpu()
+        return gpu.name if gpu else "No GPU detected"
     except:
         return "Unable to detect GPU"
 
@@ -25,12 +33,8 @@ def get_pip_freeze():
 
 def measure_vram(vram_time_series, stop_event):
     while not stop_event.is_set():
-        try:
-            gpus = GPUtil.getGPUs()
-            if gpus:
-                vram_time_series.append(gpus[0].memoryUsed)
-        except:
-            vram_time_series.append(-1)
+        gpu = get_gpu()
+        vram_time_series.append(gpu.memoryUsed if gpu else -1)
         time.sleep(0.5)
 
 # https://github.com/Comfy-Org/registry-backend/blob/main/openapi.yml#L2037
@@ -132,8 +136,8 @@ def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time,
         "branch_name": args.branch_name,
         "start_time": start_time,
         "end_time": end_time,
-        "avg_vram": avg_vram,
-        "peak_vram": peak_vram,
+        "avg_vram": int(avg_vram),
+        "peak_vram": int(peak_vram),
         "pr_number": pr_number,
         # TODO: support PR author
         # "author": args.,
