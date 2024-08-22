@@ -180,7 +180,7 @@ runs:
         which pip
         pip install -r requirements.txt
         python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
-        cp -r "${{ github.action_path }}/workflow-images" "$GITHUB_WORKSPACE/input"
+        cp -r "${{ github.action_path }}/workflow-images/*" "$GITHUB_WORKSPACE/input"
 
     - name: '[Unix] Run ComfyUI quick test'
       if: ${{ inputs.os != 'windows' && inputs.skip_quick_ci != 'true' }}
@@ -382,7 +382,7 @@ runs:
         cd $Env:GITHUB_ACTION_PATH
         pip install -r requirements.txt
         python default-models-prep.py --cache-directory C:\actions-runner\modelcache --live-directory "$Env:GITHUB_WORKSPACE/models"
-        Copy-Item -Path "$Env:GITHUB_ACTION_PATH\workflow-images" -Destination "$Env:GITHUB_WORKSPACE\input" -Recurse
+        Copy-Item -Path "$Env:GITHUB_ACTION_PATH\workflow-images\*" -Destination "$Env:GITHUB_WORKSPACE\input" -Recurse
       shell: powershell
 
     - name: '[Win] Run ComfyUI quick test'
