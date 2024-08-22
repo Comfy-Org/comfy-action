@@ -1,4 +1,4 @@
-import argparse, datetime, json, os, sys, pprint, re, subprocess, requests, platform, psutil, GPUtil, traceback
+import argparse, datetime, json, os, sys, pprint, re, subprocess, requests, platform, psutil, GPUtil, traceback, threading, time
 from enum import Enum
 from google.cloud import storage
 
@@ -22,6 +22,16 @@ def get_pip_freeze():
     except:
         traceback.print_exc()
         return "Unable to get pip freeze output"
+
+def measure_vram(vram_time_series, stop_event):
+    while not stop_event.is_set():
+        try:
+            gpus = GPUtil.getGPUs()
+            if gpus:
+                vram_time_series.append(gpus[0].memoryUsed)
+        except:
+            vram_time_series.append(-1)
+        time.sleep(0.5)
 
 # https://github.com/Comfy-Org/registry-backend/blob/main/openapi.yml#L2037
 machine_stats = {
@@ -83,7 +93,7 @@ def upload_to_gcs(bucket_name: str, destination_blob_name: str, source_file_name
     print(f"File {source_file_name} uploaded to {destination_blob_name}")
 
 
-def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time, end_time, status=WfRunStatus.Completed):
+def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time, end_time, vram_time_series, status=WfRunStatus.Completed):
 
     is_pr = args.branch_name.endswith("/merge")
     pr_number = None
@@ -92,6 +102,18 @@ def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time,
 
     # Create the payload as a dictionary
     # Should be mapping to https://github.com/Comfy-Org/registry-backend/blob/main/openapi.yml#L26
+
+    local_machine_stats = machine_stats.copy()
+
+    local_machine_stats["vram_time_series"] = vram_time_series
+    avg_vram = 0
+    peak_vram = 0
+    if -1 in vram_time_series:
+        avg_vram = -1
+        peak_vram = -1
+    else:
+        avg_vram = sum(vram_time_series) / len(vram_time_series)
+        peak_vram = max(vram_time_series)
 
     payload = {
         "repo": args.repo,
@@ -110,9 +132,8 @@ def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time,
         "branch_name": args.branch_name,
         "start_time": start_time,
         "end_time": end_time,
-        # TODO: support these metrics
-        # "avg_vram": 0,
-        # "peak_vram": 0,
+        "avg_vram": avg_vram,
+        "peak_vram": peak_vram,
         "pr_number": pr_number,
         # TODO: support PR author
         # "author": args.,
@@ -121,7 +142,7 @@ def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time,
         "python_version": args.python_version,
         "pytorch_version": args.torch_version,
         "status": status.value,
-        "machine_stats": machine_stats
+        "machine_stats": local_machine_stats
     }
 
     # Convert payload dictionary to a JSON string
@@ -201,6 +222,12 @@ def main(args):
         print(f"Running workflow {file_path}")
         start_time = int(datetime.datetime.now().timestamp())
         output_filenames = []
+
+        stop_event = threading.Event()
+        vram_time_series = []
+        vram_thread = threading.Thread(target=measure_vram, args=(vram_time_series, stop_event))
+        vram_thread.start()
+
         try:
             result = subprocess.run(
                 [
@@ -216,6 +243,9 @@ def main(args):
                 env=os.environ,
             )
 
+            stop_event.set()
+            vram_thread.join()
+
             full_output = f"{result.stdout}"
             print(f"stdout: {full_output}")
             print(f"stderr: {result.stderr}")
@@ -226,7 +256,7 @@ def main(args):
                 output_filenames = [f"{args.output_file_prefix}_{counter:05}_.png"]
 
         except subprocess.CalledProcessError as e:
-            send_payload_to_api(args, gs_path, workflow_file_name, start_time, int(datetime.datetime.now().timestamp()), WfRunStatus.Failed)
+            send_payload_to_api(args, gs_path, workflow_file_name, start_time, int(datetime.datetime.now().timestamp()), vram_time_series, WfRunStatus.Failed)
             print("Error STD Out:", e.stdout)
             print("Error:", e.stderr)
             raise e
@@ -237,7 +267,7 @@ def main(args):
         for filename in output_filenames:
             upload_to_gcs(args.gsc_bucket_name, gs_path, f"{args.workspace_path}/output/{filename}")
 
-        send_payload_to_api(args, gs_path, workflow_file_name, start_time, end_time, WfRunStatus.Completed)
+        send_payload_to_api(args, gs_path, workflow_file_name, start_time, end_time, vram_time_series, WfRunStatus.Completed)
         counter += 1
 
 
