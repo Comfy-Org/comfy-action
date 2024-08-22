@@ -27,7 +27,7 @@ inputs:
   workflow_filenames:
     description: "The list of workflow filenames is listed in the workflows/ directory. Separate by comma, e.g., 'workflow1.json,workflow2.json'."
     required: false
-    default: 'sd15_default.json,sd15_lora.json,xl_default.json'
+    default: 'sd15_default.json,sd15_lora.json,xl_default.json,xl_sketch_control.json'
   comfyui_flags:
     description: "Flags to pass to the comfyui application. eg. --force-fp16"
     required: false
