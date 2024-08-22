@@ -1,13 +1,5 @@
-import argparse
-import datetime
-import json
-import os
-import pprint
-import re
-import subprocess
+import argparse, datetime, json, os, sys, pprint, re, subprocess, requests, platform, psutil, GPUtil, traceback
 from enum import Enum
-
-import requests
 from google.cloud import storage
 
 
@@ -17,6 +9,34 @@ class WfRunStatus(Enum):
     Failed = "WorkflowRunStatusFailed"
     Completed = "WorkflowRunStatusCompleted"
 
+def get_gpu_info():
+    try:
+        gpus = GPUtil.getGPUs()
+        return gpus[0].name if gpus else "No GPU detected"
+    except:
+        return "Unable to detect GPU"
+
+def get_pip_freeze():
+    try:
+        return subprocess.check_output([sys.executable, '-m', 'pip', 'freeze']).decode('utf-8')
+    except:
+        traceback.print_exc()
+        return "Unable to get pip freeze output"
+
+# https://github.com/Comfy-Org/registry-backend/blob/main/openapi.yml#L2037
+machine_stats = {
+    "machine_name": platform.node(),
+    "os_version": f"{platform.system()} {platform.release()}",
+    "gpu_type": get_gpu_info(),
+    "cpu_capacity": f"{psutil.cpu_count()} cores",
+    "initial_cpu": f"{psutil.cpu_count() - psutil.cpu_count(logical=False)} cores available",
+    "memory_capacity": f"{psutil.virtual_memory().total / (1024 ** 3):.2f} GB",
+    "initial_ram": f"{psutil.virtual_memory().available / (1024 ** 3):.2f} GB available",
+    "vram_time_series": {},
+    "disk_capacity": f"{psutil.disk_usage('/').total / (1024 ** 3):.2f} GB",
+    "initial_disk": f"{psutil.disk_usage('/').free / (1024 ** 3):.2f} GB available",
+    "pip_freeze": get_pip_freeze()
+}
 
 def read_json_file(file_path):
     with open(file_path, "r", encoding="utf-8") as file:
@@ -72,6 +92,7 @@ def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time,
 
     # Create the payload as a dictionary
     # Should be mapping to https://github.com/Comfy-Org/registry-backend/blob/main/openapi.yml#L26
+
     payload = {
         "repo": args.repo,
         "job_id": args.job_id,
@@ -98,8 +119,9 @@ def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time,
         "job_trigger_user": args.job_trigger_user,
         "comfy_run_flags": args.comfy_run_flags,
         "python_version": args.python_version,
-        "torch_version": args.torch_version,
+        "pytorch_version": args.torch_version,
         "status": status.value,
+        "machine_stats": machine_stats
     }
 
     # Convert payload dictionary to a JSON string
