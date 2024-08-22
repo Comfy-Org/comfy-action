@@ -27,6 +27,10 @@ MODELS = {
         "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors",
         "hash": "31e35c80fc4829d14f90153f4c74cd59c90b779f6afe05a74cd6120b893f7e5b"
     },
+    "controlnet/control-lora-sketch-rank128-metadata.safetensors": {
+        "url": "https://huggingface.co/stabilityai/control-lora/resolve/main/control-LoRAs-rank128/control-lora-sketch-rank128-metadata.safetensors",
+        "hash": "679c616807aec73c47bb7281a24a76ddfe52fa5b5d68532f542ab813347b2eae"
+    },
     # SD3 gate blocks autodownload, but HF allows this other to stay up - the hash check will verify nothing weird happened
     "checkpoints/sd3_medium.safetensors": {
         "url": "https://huggingface.co/adamo1139/stable-diffusion-3-medium-ungated/resolve/74b6131496fceb9f896c2e3d6465c2241ea22ae6/sd3_medium.safetensors",
