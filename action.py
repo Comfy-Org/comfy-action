@@ -195,7 +195,7 @@ def main(args):
 
     for workflow_file_name in workflow_files:
         gs_path = make_unix_safe(f"output-files/{args.github_action_workflow_name}-{args.os}-{args.python_version}-{args.cuda_version}-{args.torch_version}-{workflow_file_name}-run-{args.run_id}")
-        send_payload_to_api(args, gs_path, workflow_file_name, 0, 0, WfRunStatus.Started)
+        #send_payload_to_api(args, gs_path, workflow_file_name, 0, 0, WfRunStatus.Started)
         file_path = f"workflows/{workflow_file_name}"
 
         print(f"Running workflow {file_path}")

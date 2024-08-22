@@ -229,7 +229,6 @@ runs:
         TIMESTAMP=$(git show -s --format=%cI $COMMIT_HASH)
         MESSAGE=$(git show -s --format=%s $COMMIT_HASH)
 
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         cd ${{ github.action_path }}
         echo "Running workflows: ${{ inputs.workflow_filenames }}"
         python3 action.py \
