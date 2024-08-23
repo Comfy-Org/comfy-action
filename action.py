@@ -32,10 +32,15 @@ def get_pip_freeze():
         return "Unable to get pip freeze output"
 
 def measure_vram(vram_time_series, stop_event):
-    while not stop_event.is_set():
+    stopped_for = 0
+    while True:
         gpu = get_gpu()
         vram_time_series.append(gpu.memoryUsed if gpu else -1)
         time.sleep(0.5)
+        if stop_event.is_set():
+            stopped_for += 1
+            if stopped_for > 2:
+                break
 
 # https://github.com/Comfy-Org/registry-backend/blob/main/openapi.yml#L2037
 machine_stats = {
