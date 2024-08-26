@@ -11,7 +11,7 @@ class WfRunStatus(Enum):
 
 def get_comfy_process():
     comfy_processes = []
-    process_list = psutil.process_iter(['pid', 'name', 'cmdline'])
+    process_list = list(psutil.process_iter(['pid', 'name', 'cmdline']))
     python_processes = [proc for proc in process_list if 'python' in proc.info['name'].lower()]
     for process in python_processes:
         cmdline = process.info['cmdline']
