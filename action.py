@@ -17,10 +17,17 @@ def get_gpu():
     except:
         return None
 
-def get_gpu_info():
+def get_gpu_name():
     try:
         gpu = get_gpu()
         return gpu.name if gpu else "No GPU detected"
+    except:
+        return "Unable to detect GPU"
+
+def get_vramtotal():
+    try:
+        gpu = get_gpu()
+        return f"{gpu.memoryTotal} MiB" if gpu else "No GPU detected"
     except:
         return "Unable to detect GPU"
 
@@ -46,7 +53,7 @@ def measure_vram(vram_time_series, stop_event):
 machine_stats = {
     "machine_name": platform.node(),
     "os_version": f"{platform.system()} {platform.release()}",
-    "gpu_type": get_gpu_info(),
+    "gpu_type": get_gpu_name(),
     "cpu_capacity": f"{psutil.cpu_count()} cores",
     "initial_cpu": f"{psutil.cpu_count() - psutil.cpu_count(logical=False)} cores available",
     "memory_capacity": f"{psutil.virtual_memory().total / (1024 ** 3):.2f} GB",
@@ -112,6 +119,7 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
     local_machine_stats = machine_stats.copy()
 
     local_machine_stats["vram_time_series"] = {f"{i / 2} seconds": f"{int(vram_time_series[i])} MiB" for i in range(len(vram_time_series))}
+    local_machine_stats["vram_time_series"]["total"] = get_vramtotal()
     avg_vram = 0
     peak_vram = 0
     if -1 in vram_time_series:
