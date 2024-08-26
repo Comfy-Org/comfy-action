@@ -179,8 +179,11 @@ runs:
         cd ${{ github.action_path }}
         which pip
         pip install -r requirements.txt
+        echo "will run default-models prep"
         python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
+        echo "default-models-prep done, will copy workflow images"
         cp -r "${{ github.action_path }}"/workflow-images/* "$GITHUB_WORKSPACE/input"
+        echo "workflow images copied"
 
     - name: '[Unix] Run ComfyUI quick test'
       if: ${{ inputs.os != 'windows' && inputs.skip_quick_ci != 'true' }}
