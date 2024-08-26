@@ -124,7 +124,7 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
 
     available_ram = psutil.virtual_memory().available / (1024 ** 2)
 
-    local_machine_stats["vram_time_series"] = {f"{i / 2} seconds": f"{int(vram_time_series[i])} MiB" for i in range(len(vram_time_series))}
+    local_machine_stats["vram_time_series"] = {f"{i / 2} seconds": vram_time_series[i] for i in range(len(vram_time_series))}
     local_machine_stats["vram_time_series"]["total"] = f"{get_vramtotal()},{available_ram} MiB"
     avg_vram = 0
     peak_vram = 0
