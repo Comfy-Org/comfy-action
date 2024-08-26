@@ -251,7 +251,8 @@ def main(args):
     if names == "auto":
         names = "sd15_default.json,sd15_lora.json,xl_default.json,xl_sketch_control.json"
         if args.os == "linux":
-            names += ",sd3_default.json,sd3_multi_prompt.json,sd3-single-t5.json"
+            # Note: SD3 and Flux are intentionally Linux-only (due to RAM limits on other main machines) and also intentionally at the end
+            names += ",sd3_default.json,sd3_multi_prompt.json,sd3-single-t5.json,flux_schnell_fp8_default.json"
     workflow_files = names.split(",")
     print(f"Running workflows: {workflow_files}")
     counter = 1
