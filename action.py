@@ -300,6 +300,8 @@ def main(args):
                 output_filenames = [f"{args.output_file_prefix}_{counter:05}_.png"]
 
         except subprocess.CalledProcessError as e:
+            stop_event.set()
+            vram_thread.join()
             send_payload_to_api(args, gs_path, logs_gs_path, workflow_file_name, start_time, int(datetime.datetime.now().timestamp()), vram_time_series, WfRunStatus.Failed)
             print("Error STD Out:", e.stdout)
             print("Error:", e.stderr)
