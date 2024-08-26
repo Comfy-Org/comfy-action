@@ -10,21 +10,18 @@ class WfRunStatus(Enum):
     Completed = "WorkflowRunStatusCompleted"
 
 def get_comfy_process():
-    python_processes = []
-    for process in psutil.process_iter(['pid', 'name', 'cmdline']):
-        try:
-            if 'python' in process.info['name'].lower():
-                cmdline = process.info['cmdline']
-                if cmdline and 'main.py' in ' '.join(cmdline):
-                    python_processes.append(process)
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            print("Error while getting process info, skipping")
-            pass
-    
-    if len(python_processes) == 1:
-        return python_processes[0]
-    
-    print(f"Found {len(python_processes)} comfy processes, expected 1, will not measure RAM")
+    comfy_processes = []
+    process_list = psutil.process_iter(['pid', 'name', 'cmdline'])
+    python_processes = [proc for proc in process_list if 'python' in proc.info['name'].lower()]
+    for process in python_processes:
+        cmdline = process.info['cmdline']
+        if cmdline and 'main.py' in ' '.join(cmdline):
+            comfy_processes.append(process)
+
+    if len(comfy_processes) == 1:
+        return comfy_processes[0]
+
+    print(f"Found {len(comfy_processes)} comfy processes out of {len(process_list)} total processes ({len(python_processes)} python), expected 1, will not measure RAM usage")
     return None
 
 comfy_process = get_comfy_process()
