@@ -35,6 +35,10 @@ MODELS = {
     "checkpoints/sd3_medium.safetensors": {
         "url": "https://huggingface.co/adamo1139/stable-diffusion-3-medium-ungated/resolve/74b6131496fceb9f896c2e3d6465c2241ea22ae6/sd3_medium.safetensors",
         "hash": "cc236278d28c8c3eccb8e21ee0a67ebed7dd6e9ce40aa9de914fa34e8282f191"
+    },
+    "checkpoints/flux1-schnell-fp8.safetensors": {
+        "url": "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors",
+        "hash": "ead426278b49030e9da5df862994f25ce94ab2ee4df38b556ddddb3db093bf72"
     }
 }
 
