@@ -249,7 +249,7 @@ def parse_raw_output(full_output):
 def main(args):
     names = args.comfy_workflow_names
     if names == "auto":
-        names = "sd15_default.json,sd15_lora.json,xl_default.json,xl_sketch_control.json"
+        names = "sd15_default.json,sd15_lora.json,xl_default.json,xl_sketch_control.json,mixed_15_xl_addrefine.json"
         if args.os == "linux":
             # Note: SD3 and Flux are intentionally Linux-only (due to RAM limits on other main machines) and also intentionally at the end
             names += ",sd3_default.json,sd3_multi_prompt.json,sd3-single-t5.json,flux_schnell_fp8_default.json"
