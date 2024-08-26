@@ -42,7 +42,11 @@ def measure_vram(vram_time_series, stop_event):
     stopped_for = 0
     while True:
         gpu = get_gpu()
-        vram_time_series.append(gpu.memoryUsed if gpu else -1)
+        vram = gpu.memoryUsed if gpu else 0
+        gpu_usage = gpu.load if gpu else 0
+        cpu_ram = psutil.virtual_memory().available / (1024 ** 2)
+        cpu_usage = psutil.cpu_percent()
+        vram_time_series.append(f"{vram} MiB,{gpu_usage*100:.1f},{cpu_ram} MiB,{cpu_usage:.2f}")
         time.sleep(0.5)
         if stop_event.is_set():
             stopped_for += 1
@@ -118,8 +122,10 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
 
     local_machine_stats = machine_stats.copy()
 
+    available_ram = psutil.virtual_memory().available / (1024 ** 2)
+
     local_machine_stats["vram_time_series"] = {f"{i / 2} seconds": f"{int(vram_time_series[i])} MiB" for i in range(len(vram_time_series))}
-    local_machine_stats["vram_time_series"]["total"] = get_vramtotal()
+    local_machine_stats["vram_time_series"]["total"] = f"{get_vramtotal()},{available_ram} MiB"
     avg_vram = 0
     peak_vram = 0
     if -1 in vram_time_series:
