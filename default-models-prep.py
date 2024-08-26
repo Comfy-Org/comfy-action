@@ -81,9 +81,12 @@ def main(args):
         live_target = os.path.join(live_dir, model_name)
         os.makedirs(os.path.dirname(live_target), exist_ok=True)
         if not os.path.exists(live_target):
-            # copy the file
-            shutil.copyfile(cache_target, live_target)
-            print(f"Copied {model_name} to {live_target}.")
+            try:
+                os.symlink(cache_target, live_target)
+                print(f"Linked {model_name} to {live_target}.")
+            except:
+                shutil.copyfile(cache_target, live_target)
+                print(f"Copied {model_name} to {live_target}.")
 
 
 if __name__ == "__main__":
