@@ -9,6 +9,26 @@ class WfRunStatus(Enum):
     Failed = "WorkflowRunStatusFailed"
     Completed = "WorkflowRunStatusCompleted"
 
+def get_comfy_process():
+    python_processes = []
+    for process in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            if 'python' in process.info['name'].lower():
+                cmdline = process.info['cmdline']
+                if cmdline and 'main.py' in ' '.join(cmdline):
+                    python_processes.append(process)
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            print("Error while getting process info, skipping")
+            pass
+    
+    if len(python_processes) == 1:
+        return python_processes[0]
+    
+    print(f"Found {len(python_processes)} comfy processes, expected 1, will not measure RAM")
+    return None
+
+comfy_process = get_comfy_process()
+
 def get_gpu():
     try:
         import GPUtil
@@ -44,7 +64,7 @@ def measure_vram(vram_time_series, stop_event):
         gpu = get_gpu()
         vram = gpu.memoryUsed if gpu else 0
         gpu_usage = gpu.load if gpu else 0
-        cpu_ram = psutil.virtual_memory().available / (1024 ** 2)
+        cpu_ram = comfy_process.memory_info().rss / (1024 * 1024) if comfy_process else 0
         cpu_usage = psutil.cpu_percent()
         vram_time_series.append(f"{vram} MiB,{gpu_usage*100:.1f},{cpu_ram} MiB,{cpu_usage:.2f}")
         time.sleep(0.5)
