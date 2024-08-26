@@ -126,14 +126,16 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
 
     local_machine_stats["vram_time_series"] = {f"{i / 2} seconds": vram_time_series[i] for i in range(len(vram_time_series))}
     local_machine_stats["vram_time_series"]["total"] = f"{get_vramtotal()},{available_ram} MiB"
+    vram_only = [int(vram.split(",")[0].split(" ")[0]) for vram in vram_time_series]
+
     avg_vram = 0
     peak_vram = 0
-    if -1 in vram_time_series:
+    if -1 in vram_only:
         avg_vram = -1
         peak_vram = -1
     else:
-        avg_vram = sum(vram_time_series) / len(vram_time_series)
-        peak_vram = max(vram_time_series)
+        avg_vram = sum(vram_only) / len(vram_only)
+        peak_vram = max(vram_only)
 
     payload = {
         "repo": args.repo,
