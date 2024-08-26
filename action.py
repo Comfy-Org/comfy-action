@@ -304,6 +304,8 @@ def main(args):
             print("Error STD Out:", e.stdout)
             print("Error:", e.stderr)
             raise e
+        finally:
+            stop_event.set()
 
         print(f"Workflow {file_path} completed")
         end_time = int(datetime.datetime.now().timestamp())
