@@ -253,7 +253,7 @@ def main(args):
         if args.os == "linux":
             names += ",sd3_default.json,sd3_multi_prompt.json,sd3-single-t5.json"
     workflow_files = names.split(",")
-    print("Running workflows")
+    print(f"Running workflows: {workflow_files}")
     counter = 1
 
     for workflow_file_name in workflow_files:
