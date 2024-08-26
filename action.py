@@ -247,8 +247,12 @@ def parse_raw_output(full_output):
 
 
 def main(args):
-    # Split the workflow file names using ","
-    workflow_files = args.comfy_workflow_names.split(",")
+    names = args.comfy_workflow_names
+    if names == "auto":
+        names = "sd15_default.json,sd15_lora.json,xl_default.json,xl_sketch_control.json"
+        if args.os == "linux":
+            names += ",sd3_default.json,sd3_multi_prompt.json,sd3-single-t5.json"
+    workflow_files = names.split(",")
     print("Running workflows")
     counter = 1
 
