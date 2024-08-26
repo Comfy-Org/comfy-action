@@ -312,17 +312,5 @@
     "_meta": {
       "title": "Upscale Image"
     }
-  },
-  "29": {
-    "inputs": {
-      "images": [
-        "28",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
   }
 }
