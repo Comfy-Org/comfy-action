@@ -74,11 +74,8 @@ def get_status(prompt_id, url):
 
 
 def make_unix_safe(filename):
-    # Replace spaces with underscores
     safe_filename = filename.replace(" ", "_")
-
-    # Remove any characters that are not alphanumeric, underscores, or hyphens
-    safe_filename = re.sub(r'[^\w\-\.]', '', safe_filename)
+    safe_filename = re.sub(r'[^\w\-\./]', '', safe_filename)
 
     return safe_filename
 
@@ -102,7 +99,7 @@ def upload_to_gcs(bucket_name: str, destination_blob_name: str, source_file_name
     print(f"File {source_file_name} uploaded to {destination_blob_name}")
 
 
-def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time, end_time, vram_time_series, status=WfRunStatus.Completed):
+def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_name, start_time, end_time, vram_time_series, status=WfRunStatus.Completed):
 
     is_pr = args.branch_name.endswith("/merge")
     pr_number = None
@@ -132,8 +129,7 @@ def send_payload_to_api(args, output_files_gcs_paths, workflow_name, start_time,
         "cuda_version": args.cuda_version,
         "bucket_name": args.gsc_bucket_name,
         "output_files_gcs_paths": output_files_gcs_paths,
-        # TODO: support comfy logs
-        # "comfy_logs_gcs_path":
+        "comfy_logs_gcs_path": logs_gcs_path,
         "commit_hash": args.commit_hash,
         "commit_time": args.commit_time,
         "commit_message": args.commit_message,
@@ -225,7 +221,8 @@ def main(args):
 
     for workflow_file_name in workflow_files:
         gs_path = make_unix_safe(f"output-files/{args.github_action_workflow_name}-{args.os}-{args.python_version}-{args.cuda_version}-{args.torch_version}-{workflow_file_name}-run-{args.run_id}")
-        #send_payload_to_api(args, gs_path, workflow_file_name, 0, 0, WfRunStatus.Started)
+        logs_gs_path = make_unix_safe(f"logs/{args.job_id}-{args.os}-{args.python_version}-{args.cuda_version}-{args.torch_version}-{workflow_file_name}-run-{args.run_id}")
+        #send_payload_to_api(args, gs_path, logs_gs_path, workflow_file_name, 0, 0, WfRunStatus.Started)
         file_path = f"workflows/{workflow_file_name}"
 
         print(f"Running workflow {file_path}")
@@ -265,7 +262,7 @@ def main(args):
                 output_filenames = [f"{args.output_file_prefix}_{counter:05}_.png"]
 
         except subprocess.CalledProcessError as e:
-            send_payload_to_api(args, gs_path, workflow_file_name, start_time, int(datetime.datetime.now().timestamp()), vram_time_series, WfRunStatus.Failed)
+            send_payload_to_api(args, gs_path, logs_gs_path, workflow_file_name, start_time, int(datetime.datetime.now().timestamp()), vram_time_series, WfRunStatus.Failed)
             print("Error STD Out:", e.stdout)
             print("Error:", e.stderr)
             raise e
@@ -276,7 +273,7 @@ def main(args):
         for filename in output_filenames:
             upload_to_gcs(args.gsc_bucket_name, gs_path, f"{args.workspace_path}/output/{filename}")
 
-        send_payload_to_api(args, gs_path, workflow_file_name, start_time, end_time, vram_time_series, WfRunStatus.Completed)
+        send_payload_to_api(args, gs_path, logs_gs_path, workflow_file_name, start_time, end_time, vram_time_series, WfRunStatus.Completed)
         counter += 1
 
 
