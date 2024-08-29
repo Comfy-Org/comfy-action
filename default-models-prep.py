@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 MODELS = {
     "checkpoints/v1-5-pruned-emaonly.safetensors": {
-        "url": "https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/39593d5650112b4cc580433f6b0435385882d819/v1-5-pruned-emaonly.safetensors",
+        "url": "https://huggingface.co/Comfy-Org/stable-diffusion-v1-5-archive/resolve/c36740b77a55ec396ace7c8c26589cdf2b4bc3da/v1-5-pruned-emaonly.safetensors",
         "hash": "6ce0161689b3853acaa03779ec93eafe75a02f4ced659bee03f50797806fa2fa"
     },
     "loras/epiNoiseoffset_v2.safetensors": {
@@ -24,11 +24,11 @@ MODELS = {
         "hash": "7d330da4816157540d6bb7838bf63a0f02f573fc48ca4d8de34bb0cbfd514f09"
     },
     "checkpoints/sd_xl_base_1.0.safetensors": {
-        "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors",
+        "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/462165984030d82259a11f4367a4eed129e94a7b/sd_xl_base_1.0.safetensors",
         "hash": "31e35c80fc4829d14f90153f4c74cd59c90b779f6afe05a74cd6120b893f7e5b"
     },
     "controlnet/control-lora-sketch-rank128-metadata.safetensors": {
-        "url": "https://huggingface.co/stabilityai/control-lora/resolve/main/control-LoRAs-rank128/control-lora-sketch-rank128-metadata.safetensors",
+        "url": "https://huggingface.co/stabilityai/control-lora/resolve/75590eb0e7868d3d0f1581b5126d487b33c7fdb4/control-LoRAs-rank128/control-lora-sketch-rank128-metadata.safetensors",
         "hash": "679c616807aec73c47bb7281a24a76ddfe52fa5b5d68532f542ab813347b2eae"
     },
     # SD3 gate blocks autodownload, but HF allows this other to stay up - the hash check will verify nothing weird happened
@@ -37,7 +37,7 @@ MODELS = {
         "hash": "cc236278d28c8c3eccb8e21ee0a67ebed7dd6e9ce40aa9de914fa34e8282f191"
     },
     "checkpoints/flux1-schnell-fp8.safetensors": {
-        "url": "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors",
+        "url": "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/f2808ab17fe9ff81dcf89ed0301cf644c281be0a/flux1-schnell-fp8.safetensors",
         "hash": "ead426278b49030e9da5df862994f25ce94ab2ee4df38b556ddddb3db093bf72"
     }
 }
