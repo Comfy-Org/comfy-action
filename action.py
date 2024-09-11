@@ -189,13 +189,17 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
     # Send POST request
     headers = {"Content-Type": "application/json"}
     response = requests.post(args.api_endpoint, headers=headers, data=payload_json)
-    print("#### Payload ####")
-    pprint.pprint(payload)
-    print("#### Response ####")
     try:
-        pprint.pprint(response.json())
-    except json.JSONDecodeError:
-        print(f"Invalid JSON: {response.text}")
+        print("#### Payload ####")
+        pprint.pprint(payload)
+        print("#### Response ####")
+        try:
+            pprint.pprint(response.json())
+        except json.JSONDecodeError:
+            print(f"Invalid JSON: {response.text}")
+    except:
+        # can sometimes have random encoding errors here
+        traceback.print_exc()
 
     # Write response to application.log
     log_file_path = "./application.log"
