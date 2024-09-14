@@ -128,7 +128,7 @@ def upload_to_gcs(bucket_name: str, destination_blob_name: str, source_file_name
     print(f"File {source_file_name} uploaded to {destination_blob_name}")
 
 
-def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_name, start_time, end_time, vram_time_series, status=WfRunStatus.Completed):
+def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_name, start_time, end_time, vram_time_series, status=WfRunStatus.Completed, can_retry=True):
 
     is_pr = args.branch_name.endswith("/merge")
     pr_number = None
@@ -210,6 +210,10 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
 
     # Check the response code
     if response.status_code != 200:
+        if can_retry:
+            time.sleep(10)
+            send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_name, start_time, end_time, vram_time_series, status, False)
+            return
         print(f"API request failed with status code {response.status_code} and response body")
         print(response.text)
         exit(1)
