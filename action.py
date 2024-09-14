@@ -2,6 +2,7 @@ import argparse, datetime, json, os, sys, pprint, re, subprocess, requests, plat
 from enum import Enum
 from google.cloud import storage
 
+REQUEST_TIMEOUT = 60 * 5
 
 # Reference: https://github.com/Comfy-Org/registry-backend/blob/main/openapi.yml#L2031
 class WfRunStatus(Enum):
@@ -91,11 +92,11 @@ def read_json_file(file_path):
 
 
 def post_json_to_server(json_data, url):
-    return requests.post(url, json=json_data)
+    return requests.post(url, json=json_data, timeout=REQUEST_TIMEOUT)
 
 
 def get_status(prompt_id, url):
-    response = requests.get(f"{url}/{prompt_id}")
+    response = requests.get(f"{url}/{prompt_id}", timeout=REQUEST_TIMEOUT)
     if response.status_code == 200:
         return response.json()
     return None
@@ -188,7 +189,7 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
 
     # Send POST request
     headers = {"Content-Type": "application/json"}
-    response = requests.post(args.api_endpoint, headers=headers, data=payload_json)
+    response = requests.post(args.api_endpoint, headers=headers, data=payload_json, timeout=REQUEST_TIMEOUT)
     try:
         print("#### Payload ####")
         pprint.pprint(payload)
