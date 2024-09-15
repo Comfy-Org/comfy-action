@@ -189,7 +189,18 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
 
     # Send POST request
     headers = {"Content-Type": "application/json"}
-    response = requests.post(args.api_endpoint, headers=headers, data=payload_json, timeout=REQUEST_TIMEOUT)
+    response = None
+    try:
+        response = requests.post(args.api_endpoint, headers=headers, data=payload_json, timeout=REQUEST_TIMEOUT)
+    except Exception as e:
+        if can_retry:
+            print(f"API request failed with exception {e}, retrying in 10 seconds")
+            time.sleep(10)
+            send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_name, start_time, end_time, vram_time_series, status, False)
+            return
+        print(f"API request failed with exception {e}")
+        traceback.print_exc()
+        raise e
     try:
         print("#### Payload ####")
         pprint.pprint(payload)
@@ -211,6 +222,7 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
     # Check the response code
     if response.status_code != 200:
         if can_retry:
+            print(f"API request failed with status code {response.status_code} and text {response.text}, retrying in 10 seconds")
             time.sleep(10)
             send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_name, start_time, end_time, vram_time_series, status, False)
             return
