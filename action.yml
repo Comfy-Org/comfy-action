@@ -64,6 +64,13 @@ inputs:
     description: "Skip quickci."
     required: false
     default: "true"
+env:
+  GITHUB_WORKSPACE: ${{ github.workspace }}
+  GITHUB_ACTION_PATH: ${{ github.action_path }}
+  GITHUB_RUN_ID: ${{ github.run_id }}
+  GITHUB_JOB: ${{ github.job }}
+  GITHUB_REF_NAME: ${{ github.ref_name }}
+  GITHUB_EVENT_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
 runs:
   using: "composite"
   steps:
@@ -176,13 +183,13 @@ runs:
       shell: bash -el {0}
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        cd ${{ github.action_path }}
+        cd $GITHUB_ACTION_PATH
         which pip
         pip install -r requirements.txt
         echo "will run default-models prep"
         python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
         echo "default-models-prep done, will copy workflow images"
-        cp -r "${{ github.action_path }}"/workflow-images/* "$GITHUB_WORKSPACE/input"
+        cp -r "$GITHUB_ACTION_PATH"/workflow-images/* "$GITHUB_WORKSPACE/input"
         echo "workflow images copied"
 
     - name: '[Unix] Run ComfyUI quick test'
@@ -203,7 +210,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        cd ${{ github.action_path }}
+        cd $GITHUB_ACTION_PATH
         python3 poll_server_start.py > application.log 2>&1
       shell: bash -el {0}
 
@@ -221,8 +228,8 @@ runs:
         echo "Commit time: $TIMESTAMP"
         echo "Commit title: $MESSAGE"
         echo "Commit hash: $COMMIT_HASH"
-        BRANCH_NAME="${{ github.ref_name }}"
-        PRNUMBER="${{ github.event.pull_request.number }}"
+        BRANCH_NAME="${GITHUB_REF_NAME}"
+        PRNUMBER="${GITHUB_EVENT_PULL_REQUEST_NUMBER}"
         if [ -n "$PRNUMBER" ]; then
           BRANCH_NAME="$PRNUMBER/merge"
           git fetch origin pull/$PRNUMBER/head
@@ -232,19 +239,19 @@ runs:
         TIMESTAMP=$(git show -s --format=%cI $COMMIT_HASH)
         MESSAGE=$(git show -s --format=%s $COMMIT_HASH)
 
-        cd ${{ github.action_path }}
+        cd $GITHUB_ACTION_PATH
         echo "Running workflows: ${{ inputs.workflow_filenames }}"
         python3 action.py \
           --comfy-workflow-names ${{ inputs.workflow_filenames }} \
-          --github-action-workflow-name "${{ github.workflow }}" \
+          --github-action-workflow-name "$GITHUB_WORKFLOW" \
           --os "${{ inputs.os }}" \
-          --run-id "${{ github.run_id }}" \
-          --job-id "${{ github.job }}" \
-          --job-trigger-user "${{ github.actor }}" \
+          --run-id "$GITHUB_RUN_ID" \
+          --job-id "$GITHUB_JOB" \
+          --job-trigger-user "$GITHUB_ACTOR" \
           --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" \
-          --workspace-path "${{ github.workspace }}" \
+          --workspace-path "$GITHUB_WORKSPACE" \
           --output-file-prefix ${{ inputs.output_prefix }} \
-          --repo "${{ github.repository }}" \
+          --repo "$GITHUB_REPOSITORY" \
           --comfy-run-flags "'${{ inputs.comfyui_flags }}'" \
           --python-version "${{ inputs.python_version }}" \
           --torch-version "${{ inputs.torch_version }}" \
@@ -260,7 +267,7 @@ runs:
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       with:
         name: output-files-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
-        path: ${{ github.workspace }}/output/**
+        path: $GITHUB_WORKSPACE/output/**
 
     - name: '[Unix] Upload log file to GCS'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
@@ -268,20 +275,20 @@ runs:
       uses: google-github-actions/upload-cloud-storage@v2
       with:
         process_gcloudignore: false
-        path: ${{ github.workspace }}/application.log
-        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+        path: $GITHUB_WORKSPACE/application.log
+        destination: ${{ inputs.gcs_bucket_name }}/logs/$GITHUB_JOB-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run$GITHUB_RUN_ID
 
     - name: '[Unix] Upload log file'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       uses: actions/upload-artifact@v4
       with:
-        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
-        path: ${{ github.workspace }}/application.log
+        name: app-logs-$GITHUB_JOB-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run$GITHUB_RUN_ID
+        path: $GITHUB_WORKSPACE/application.log
 
     - name: '[Unix] Cleanup output files only'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
       shell: bash -el {0}
-      run: rm -rf ${{ github.workspace }}/*
+      run: rm -rf $GITHUB_WORKSPACE/*
 
 
     #####################################################################################
@@ -406,7 +413,7 @@ runs:
         Write-Output $envGithubWorkspace
         Write-Output "##############################"
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        Start-Process powershell -ArgumentList "-File", "${{ github.action_path }}\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`"", "-CondaEnv", "`"gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}`"", "-RunFlags", "`"${{ inputs.comfyui_flags}}`""
+        Start-Process powershell -ArgumentList "-File", "$Env:GITHUB_ACTION_PATH\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`"", "-CondaEnv", "`"gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}`"", "-RunFlags", "`"${{ inputs.comfyui_flags}}`""
 
     - name: '[Win] Check if the server is running'
       if: ${{ inputs.os == 'windows' }}
@@ -426,8 +433,8 @@ runs:
         } else {
           $commit_hash = git rev-parse HEAD
         }
-        $branch_name = "${{ github.ref_name }}"
-        $pr_number = "${{ github.event.pull_request.number }}"
+        $branch_name = "$Env:GITHUB_REF_NAME"
+        $pr_number = "$Env:GITHUB_EVENT_PULL_REQUEST_NUMBER"
         if ( $pr_number -ne "" ) {
           $branch_name = "$pr_number/merge"
           git fetch origin pull/$pr_number/head
@@ -440,7 +447,7 @@ runs:
         # Special cleanup/escape for variable names
         $branch_name = $branch_name -replace '"', '\"'
         $message = $message -replace '"', '\"'
-        $actor = "${{ github.actor }}"
+        $actor = "$Env:GITHUB_ACTOR"
         $actor = $actor -replace '"', '\"'
 
         cd $Env:GITHUB_ACTION_PATH
@@ -448,15 +455,15 @@ runs:
         Write-Host "Running workflows: ${{ inputs.workflow_filenames }}"
         python action.py `
           --comfy-workflow-names "${{ inputs.workflow_filenames }}" `
-          --github-action-workflow-name "${{ github.workflow }}" `
+          --github-action-workflow-name "$Env:GITHUB_WORKFLOW" `
           --os "${{ inputs.os }}" `
-          --run-id "${{ github.run_id }}" `
-          --job-id "${{ github.job }}" `
+          --run-id "$Env:GITHUB_RUN_ID" `
+          --job-id "$Env:GITHUB_JOB" `
           --job-trigger-user $actor `
           --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" `
-          --workspace-path "${{ github.workspace }}" `
+          --workspace-path "$Env:GITHUB_WORKSPACE" `
           --output-file-prefix "${{ inputs.output_prefix }}" `
-          --repo "${{ github.repository }}" `
+          --repo "$Env:GITHUB_REPOSITORY" `
           --comfy-run-flags "'${{ inputs.comfyui_flags }}'" `
           --python-version "${{ inputs.python_version }}" `
           --torch-version "${{ inputs.torch_version }}" `
@@ -466,16 +473,16 @@ runs:
           --commit-message $message `
           --branch-name $branch_name `
           --api-endpoint "${{ inputs.api_endpoint }}"
-        (Get-ChildItem -Force -Path "${{ github.workspace }}/output").FullName
-        cat "${{ github.workspace }}/application.log"
+        (Get-ChildItem -Force -Path "$Env:GITHUB_WORKSPACE/output").FullName
+        cat "$Env:GITHUB_WORKSPACE/application.log"
     # Note the Get-ChildItem mess is powershell for "ls -la" for debug
 
     - name: '[Win] Upload Output Files'
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       with:
-        name: output-files-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
-        path: ${{ github.workspace }}/output/**
+        name: output-files-$GITHUB_JOB-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run$GITHUB_RUN_ID
+        path: $Env:GITHUB_WORKSPACE/output/**
 
     - name: '[Win] Upload log file to GCS'
       if: ${{ ( success() || failure() ) && inputs.os == 'windows'}}
@@ -483,17 +490,17 @@ runs:
       uses: google-github-actions/upload-cloud-storage@v2
       with:
         process_gcloudignore: false
-        path: ${{ github.workspace }}/application.log
-        destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
+        path: $Env:GITHUB_WORKSPACE/application.log
+        destination: ${{ inputs.gcs_bucket_name }}/logs/$GITHUB_JOB-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run$GITHUB_RUN_ID
 
     - name: '[Win] Upload log file'
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       with:
-        name: app-logs-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
-        path: ${{ github.workspace }}/application.log
+        name: app-logs-$GITHUB_JOB-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run$GITHUB_RUN_ID
+        path: $Env:GITHUB_WORKSPACE/application.log
 
     - name: '[Win] Cleanup output files only'
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       shell: powershell
-      run: Remove-Item -Path "${{ github.workspace }}/output/*" -Recurse -Force
+      run: Remove-Item -Path "$Env:GITHUB_WORKSPACE/output/*" -Recurse -Force
