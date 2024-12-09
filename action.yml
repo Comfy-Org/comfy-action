@@ -119,7 +119,7 @@ runs:
         CUDA_VERSION: ${{ inputs.cuda_version }}
       run: |
         conda env list
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         conda install pytorch-nightly::pytorch torchvision torchaudio -c pytorch-nightly
 
     - name: '[Unix-Mac-Only] Install Pytorch stable'
@@ -130,7 +130,7 @@ runs:
         TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
         conda env list
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         conda install pytorch::pytorch torchvision torchaudio -c pytorch
     
     - name: '[Unix-Linux-Only] Install Pytorch nightly'
@@ -141,8 +141,8 @@ runs:
         TORCH_VERSION: ${{ inputs.torch_version }}
         CUDA_VERSION: ${{ inputs.cuda_version }}
       run: |
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
-        #conda install pytorch torchvision torchaudio pytorch-cuda=${{ CUDA_VERSION }} -c pytorch-nightly -c nvidia
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
+        #conda install pytorch torchvision torchaudio pytorch-cuda=${CUDA_VERSION} -c pytorch-nightly -c nvidia
         pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
 
     - name: '[Unix-Linux-Only] Install Pytorch stable'
@@ -153,8 +153,8 @@ runs:
         TORCH_VERSION: ${{ inputs.torch_version }}
         CUDA_VERSION: ${{ inputs.cuda_version }}
       run: |
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
-        conda install pytorch torchvision torchaudio pytorch-cuda=${{ CUDA_VERSION }} -c pytorch -c nvidia
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
+        conda install pytorch torchvision torchaudio pytorch-cuda=${CUDA_VERSION} -c pytorch -c nvidia
 
     - name: '[Unix] Install Pytorch specific version'
       if: ${{ inputs.os == 'macos' && inputs.torch_version == 'specific' }}
@@ -163,7 +163,7 @@ runs:
         PYTHON_VERSION: ${{ inputs.python_version }}
         TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         echo "Run specific torch install command"
         ${{ inputs.specific_torch_install }}
 
@@ -174,7 +174,7 @@ runs:
         PYTHON_VERSION: ${{ inputs.python_version }}
         TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         which pip
         pip install -r requirements.txt
         pip install -U comfy-cli
@@ -186,7 +186,7 @@ runs:
         PYTHON_VERSION: ${{ inputs.python_version }}
         TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         which python
         echo "#### Python Version ####"
         python --version
@@ -203,7 +203,7 @@ runs:
         PYTHON_VERSION: ${{ inputs.python_version }}
         TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         cd $GITHUB_ACTION_PATH
         which pip
         pip install -r requirements.txt
@@ -220,7 +220,7 @@ runs:
         PYTHON_VERSION: ${{ inputs.python_version }}
         TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         python3 main.py --quick-test-for-ci
 
     - name: '[Unix] Run ComfyUI'
@@ -230,7 +230,7 @@ runs:
         PYTHON_VERSION: ${{ inputs.python_version }}
         TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         python3 main.py ${{inputs.comfyui_flags}} > application.log 2>&1 &
 
     - name: '[Unix] Check if the server is running'
@@ -240,7 +240,7 @@ runs:
         PYTHON_VERSION: ${{ inputs.python_version }}
         TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         cd $GITHUB_ACTION_PATH
         python3 poll_server_start.py > application.log 2>&1
       shell: bash -el {0}
@@ -267,7 +267,7 @@ runs:
         INPUT_API_ENDPOINT: ${{ inputs.api_endpoint }}
         INPUT_USE_PRIOR_COMMIT: ${{ inputs.use_prior_commit }}
       run: |
-        conda activate gha-comfyui-${{ INPUT_PYTHON_VERSION }}-${{ INPUT_TORCH_VERSION }}
+        conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         if [ "${{ INPUT_USE_PRIOR_COMMIT }}" == "true" ]; then
           COMMIT_HASH=$(git rev-parse HEAD^)
         else
@@ -288,27 +288,27 @@ runs:
         MESSAGE=$(git show -s --format=%s $COMMIT_HASH)
 
         cd $GITHUB_ACTION_PATH
-        echo "Running workflows: ${{ INPUT_WORKFLOW_NAMES }}"
+        echo "Running workflows: ${INPUT_WORKFLOW_NAMES}"
         python3 action.py \
-          --comfy-workflow-names ${{ INPUT_WORKFLOW_NAMES }} \
+          --comfy-workflow-names ${INPUT_WORKFLOW_NAMES} \
           --github-action-workflow-name "$GITHUB_WORKFLOW" \
-          --os "${{ INPUT_OS }}" \
+          --os "${INPUT_OS}" \
           --run-id "$GITHUB_RUN_ID" \
           --job-id "$GITHUB_JOB" \
           --job-trigger-user "$GITHUB_ACTOR" \
-          --gsc-bucket-name "${{ INPUT_GCS_BUCKET_NAME }}" \
+          --gsc-bucket-name "${INPUT_GCS_BUCKET_NAME}" \
           --workspace-path "$GITHUB_WORKSPACE" \
-          --output-file-prefix ${{ INPUT_OUTPUT_PREFIX }} \
+          --output-file-prefix "${INPUT_OUTPUT_PREFIX}" \
           --repo "$GITHUB_REPOSITORY" \
-          --comfy-run-flags "'${{ INPUT_COMFYUI_FLAGS }}'" \
-          --python-version "${{ INPUT_PYTHON_VERSION }}" \
-          --torch-version "${{ INPUT_TORCH_VERSION }}" \
-          --cuda-version "${{ INPUT_CUDA_VERSION }}" \
+          --comfy-run-flags "'${INPUT_COMFYUI_FLAGS}'" \
+          --python-version "${PYTHON_VERSION}" \
+          --torch-version "${TORCH_VERSION}" \
+          --cuda-version "${CUDA_VERSION}" \
           --commit-hash "$COMMIT_HASH" \
           --commit-time "$TIMESTAMP" \
           --commit-message "$MESSAGE" \
           --branch-name "$BRANCH_NAME" \
-          --api-endpoint "${{ INPUT_API_ENDPOINT }}"
+          --api-endpoint "${INPUT_API_ENDPOINT}"
 
     - name: '[Unix] Upload Output Files'
       uses: actions/upload-artifact@v4
@@ -324,7 +324,7 @@ runs:
         INPUT_PYTHON_VERSION: ${{ inputs.python_version }}
         INPUT_TORCH_VERSION: ${{ inputs.torch_version }}
       with:
-        name: output-files-${{ GITHUB_JOB }}-${{ INPUT_OS }}-${{ INPUT_PYTHON_VERSION }}-${{ inputs.cuda_version }}-${{ INPUT_TORCH_VERSION }}-${{ inputs.workflow_name }}-run${{ GITHUB_RUN_ID }}
+        name: output-files-${GITHUB_JOB}-${INPUT_OS}-${INPUT_PYTHON_VERSION}-${CUDA_VERSION}-${TORCH_VERSION}-${WORKFLOW_NAME}-run${GITHUB_RUN_ID}
         path: $GITHUB_WORKSPACE/output/**
 
     - name: '[Unix] Upload log file to GCS'
@@ -344,7 +344,7 @@ runs:
       with:
         process_gcloudignore: false
         path: $GITHUB_WORKSPACE/application.log
-        destination: ${{ INPUT_GCS_BUCKET_NAME }}/logs/$GITHUB_JOB-${{ INPUT_OS }}-${{ INPUT_PYTHON_VERSION }}-${{ INPUT_CUDA_VERSION }}-${{ INPUT_TORCH_VERSION }}-${{ INPUT_WORKFLOW_NAME }}-run$GITHUB_RUN_ID
+        destination: ${{ INPUT_GCS_BUCKET_NAME }}/logs/$GITHUB_JOB-${INPUT_OS}-${INPUT_PYTHON_VERSION}-${CUDA_VERSION}-${TORCH_VERSION}-${WORKFLOW_NAME}-run$GITHUB_RUN_ID
 
     - name: '[Unix] Upload log file'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
@@ -358,7 +358,7 @@ runs:
         INPUT_PYTHON_VERSION: ${{ inputs.python_version }}
         INPUT_TORCH_VERSION: ${{ inputs.torch_version }}
       with:
-        name: app-logs-$GITHUB_JOB-${{ INPUT_OS }}-${{ INPUT_PYTHON_VERSION }}-${{ INPUT_CUDA_VERSION }}-${{ INPUT_TORCH_VERSION }}-${{ INPUT_WORKFLOW_NAME }}-run$GITHUB_RUN_ID
+        name: app-logs-$GITHUB_JOB-${INPUT_OS}-${INPUT_PYTHON_VERSION}-${CUDA_VERSION}-${TORCH_VERSION}-${WORKFLOW_NAME}-run$GITHUB_RUN_ID
         path: $GITHUB_WORKSPACE/application.log
 
     - name: '[Unix] Cleanup output files only'
@@ -402,58 +402,77 @@ runs:
         PYTHON_VERSION: ${{ inputs.python_version }}
         TORCH_VERSION: ${{ inputs.torch_version }}
       with:
-        activate-environment: gha-comfyui-${{ PYTHON_VERSION }}-${{ TORCH_VERSION }}
+        activate-environment: gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
         miniconda-version: "latest"
-        python-version: ${{ PYTHON_VERSION }}
+        python-version: $Env:PYTHON_VERSION
       continue-on-error: true
 
     # This step is created because the Conda setup step fails everytime.
     - name: '[Win-Only] Create Conda environment if not exists'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
+      env:
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        if (-not (conda env list | Select-String -Pattern "gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}")) {
-          conda create -n gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }} python=${{ inputs.python_version }} -y
+        if (-not (conda env list | Select-String -Pattern "gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION")) {
+          conda create -n gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION python=$Env:PYTHON_VERSION -y
         }
 
 
     - name: '[Win-Only] Install Pytorch nightly'
       if: ${{ inputs.os == 'windows' && inputs.torch_version == 'nightly'}}
       shell: powershell
+      env:
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        conda activate gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
         Get-Command pip3
         pip3 install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
 
     - name: '[Win-Only] Install Pytorch stable'
       if: ${{ inputs.os == 'windows' && inputs.torch_version =='stable' }}
       shell: powershell
+      env:
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        conda activate gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
         Get-Command pip3
         pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
     
     - name: '[Win] Install Pytorch specific version'
       if: ${{ inputs.os == 'windows' && inputs.torch_version == 'specific' }}
       shell: powershell
+      env:
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        conda activate gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
         Write-Output "Run specific torch install command"
         ${{ inputs.specific_torch_install }}
 
     - name: '[Win] Install dependencies'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
+      env:
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        conda activate gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
         pip install -r requirements.txt
         pip install -U comfy-cli
         conda install google-cloud-storage -y # This is because some fcking how, installing google-cloud-storage using pip has permission error on Windows using python 3.12
 
     - name: "[Win] Check conda environment"
       if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      env:
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        conda activate gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
         Get-Command python
         Write-Output "#### Python Version ####"
         python --version
@@ -462,23 +481,28 @@ runs:
         Write-Output "#### Conda Info ####"
         conda info
         conda list
-      shell: powershell
 
     - name: '[Win] Download models'
       if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      env:
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        conda activate gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
         cd $Env:GITHUB_ACTION_PATH
         pip install -r requirements.txt
         python default-models-prep.py --cache-directory C:\actions-runner\modelcache --live-directory "$Env:GITHUB_WORKSPACE/models"
         Copy-Item -Path "$Env:GITHUB_ACTION_PATH\workflow-images\*" -Destination "$Env:GITHUB_WORKSPACE\input" -Recurse
-      shell: powershell
 
     - name: '[Win] Run ComfyUI quick test'
       if: ${{ inputs.os == 'windows' && inputs.skip_quick_ci != 'true' }}
       shell: powershell
+      env:
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        conda activate gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
         python $Env:GITHUB_WORKSPACE/main.py --quick-test-for-ci
         Write-Output "(Temporary) fixing torch nightly bug"
         python $Env:GITHUB_WORKSPACE/fix_torch.py
@@ -486,28 +510,52 @@ runs:
     - name: '[Win] Run ComfyUI'
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
+      env:
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
         $envGithubWorkspace = $Env:GITHUB_WORKSPACE
         Write-Output "##############################"
         Write-Output $envGithubWorkspace
         Write-Output "##############################"
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        conda activate gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
         Start-Process powershell -ArgumentList "-File", "$Env:GITHUB_ACTION_PATH\start-server.ps1", "-GITHUB_WORKSPACE", "`"$envGithubWorkspace`"", "-CondaEnv", "`"gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}`"", "-RunFlags", "`"${{ inputs.comfyui_flags}}`""
 
     - name: '[Win] Check if the server is running'
       if: ${{ inputs.os == 'windows' }}
+      shell: powershell
+      env:
+        PYTHON_VERSION: ${{ inputs.python_version }}
+        TORCH_VERSION: ${{ inputs.torch_version }}
       run: |
         cd $Env:GITHUB_ACTION_PATH
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        conda activate gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
         python poll_server_start.py
-      shell: powershell
 
     - name: '[Win] Get Details and Run Python Action'
       id: windows_action
       if: ${{ inputs.os == 'windows' }}
       shell: powershell
+      env:
+        GITHUB_WORKSPACE: ${{ github.workspace }}
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+        GITHUB_JOB: ${{ github.job }}
+        GITHUB_REF_NAME: ${{ github.ref_name }}
+        GITHUB_EVENT_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+        INPUT_OS: ${{ inputs.os }}
+        INPUT_PYTHON_VERSION: ${{ inputs.python_version }}
+        INPUT_TORCH_VERSION: ${{ inputs.torch_version }}
+        INPUT_CUDA_VERSION: ${{ inputs.cuda_version }}
+        INPUT_WORKFLOW_NAME: ${{ inputs.workflow_name }}
+        INPUT_COMFYUI_FLAGS: ${{ inputs.comfyui_flags }}
+        INPUT_GCS_BUCKET_NAME: ${{ inputs.gcs_bucket_name }}
+        INPUT_OUTPUT_PREFIX: ${{ inputs.output_prefix }}
+        INPUT_API_ENDPOINT: ${{ inputs.api_endpoint }}
+        INPUT_USE_PRIOR_COMMIT: ${{ inputs.use_prior_commit }}  
+
       run: |
-        if ( "${{ inputs.use_prior_commit }}" -eq "true" ) {
+        if ( $Env:INPUT_USE_PRIOR_COMMIT -eq "true" ) {
           $commit_hash = git rev-parse HEAD^
         } else {
           $commit_hash = git rev-parse HEAD
@@ -530,28 +578,28 @@ runs:
         $actor = $actor -replace '"', '\"'
 
         cd $Env:GITHUB_ACTION_PATH
-        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        Write-Host "Running workflows: ${{ inputs.workflow_filenames }}"
+        conda activate gha-comfyui-$Env:PYTHON_VERSION-$Env:TORCH_VERSION
+        Write-Host "Running workflows: $Env:INPUT_WORKFLOW_NAMES"
         python action.py `
-          --comfy-workflow-names "${{ inputs.workflow_filenames }}" `
+          --comfy-workflow-names "$Env:INPUT_WORKFLOW_NAMES" `
           --github-action-workflow-name "$Env:GITHUB_WORKFLOW" `
-          --os "${{ inputs.os }}" `
+          --os "$Env:INPUT_OS" `
           --run-id "$Env:GITHUB_RUN_ID" `
           --job-id "$Env:GITHUB_JOB" `
           --job-trigger-user $actor `
-          --gsc-bucket-name "${{ inputs.gcs_bucket_name }}" `
+          --gsc-bucket-name "$Env:INPUT_GCS_BUCKET_NAME" `
           --workspace-path "$Env:GITHUB_WORKSPACE" `
-          --output-file-prefix "${{ inputs.output_prefix }}" `
+          --output-file-prefix "$Env:INPUT_OUTPUT_PREFIX" `
           --repo "$Env:GITHUB_REPOSITORY" `
-          --comfy-run-flags "'${{ inputs.comfyui_flags }}'" `
-          --python-version "${{ inputs.python_version }}" `
-          --torch-version "${{ inputs.torch_version }}" `
-          --cuda-version "${{ inputs.cuda_version }}" `
+          --comfy-run-flags "$Env:INPUT_COMFYUI_FLAGS" `
+          --python-version "$Env:INPUT_PYTHON_VERSION" `
+          --torch-version "$Env:INPUT_TORCH_VERSION" `
+          --cuda-version "$Env:INPUT_CUDA_VERSION" `
           --commit-hash "$commit_hash" `
           --commit-time "$timestamp" `
           --commit-message $message `
           --branch-name $branch_name `
-          --api-endpoint "${{ inputs.api_endpoint }}"
+          --api-endpoint "$Env:INPUT_API_ENDPOINT"
         (Get-ChildItem -Force -Path "$Env:GITHUB_WORKSPACE/output").FullName
         cat "$Env:GITHUB_WORKSPACE/application.log"
     # Note the Get-ChildItem mess is powershell for "ls -la" for debug
@@ -559,8 +607,18 @@ runs:
     - name: '[Win] Upload Output Files'
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
+      env:
+        GITHUB_WORKSPACE: ${{ github.workspace }}
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+        GITHUB_JOB: ${{ github.job }}
+        INPUT_OS: ${{ inputs.os }}
+        INPUT_PYTHON_VERSION: ${{ inputs.python_version }}
+        INPUT_CUDA_VERSION: ${{ inputs.cuda_version }}
+        INPUT_TORCH_VERSION: ${{ inputs.torch_version }}
+        INPUT_WORKFLOW_NAME: ${{ inputs.workflow_name }}
       with:
-        name: output-files-$GITHUB_JOB-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run$GITHUB_RUN_ID
+        name: output-files-$GITHUB_JOB-$Env:INPUT_OS-$Env:INPUT_PYTHON_VERSION-$Env:INPUT_CUDA_VERSION-$Env:INPUT_TORCH_VERSION-$Env:INPUT_WORKFLOW_NAME-run$GITHUB_RUN_ID
         path: $Env:GITHUB_WORKSPACE/output/**
 
     - name: '[Win] Upload log file to GCS'
@@ -570,13 +628,13 @@ runs:
       with:
         process_gcloudignore: false
         path: $Env:GITHUB_WORKSPACE/application.log
-        destination: ${{ inputs.gcs_bucket_name }}/logs/$GITHUB_JOB-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run$GITHUB_RUN_ID
+        destination: $Env:INPUT_GCS_BUCKET_NAME/logs/$GITHUB_JOB-$Env:INPUT_OS-$Env:INPUT_PYTHON_VERSION-$Env:INPUT_CUDA_VERSION-$Env:INPUT_TORCH_VERSION-$Env:INPUT_WORKFLOW_NAME-run$GITHUB_RUN_ID
 
     - name: '[Win] Upload log file'
       uses: actions/upload-artifact@v4
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       with:
-        name: app-logs-$GITHUB_JOB-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run$GITHUB_RUN_ID
+        name: app-logs-$GITHUB_JOB-$Env:INPUT_OS-$Env:INPUT_PYTHON_VERSION-$Env:INPUT_CUDA_VERSION-$Env:INPUT_TORCH_VERSION-$Env:INPUT_WORKFLOW_NAME-run$GITHUB_RUN_ID
         path: $Env:GITHUB_WORKSPACE/application.log
 
     - name: '[Win] Cleanup output files only'
