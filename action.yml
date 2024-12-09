@@ -243,7 +243,6 @@ runs:
         conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
         cd $GITHUB_ACTION_PATH
         python3 poll_server_start.py > application.log 2>&1
-      shell: bash -el {0}
 
     - name: '[Unix] Get Details and Run Python Action'
       id: unix_action
@@ -268,7 +267,7 @@ runs:
         INPUT_USE_PRIOR_COMMIT: ${{ inputs.use_prior_commit }}
       run: |
         conda activate gha-comfyui-${PYTHON_VERSION}-${TORCH_VERSION}
-        if [ "${{ INPUT_USE_PRIOR_COMMIT }}" == "true" ]; then
+        if [ "${INPUT_USE_PRIOR_COMMIT}" == "true" ]; then
           COMMIT_HASH=$(git rev-parse HEAD^)
         else
           COMMIT_HASH=$(git rev-parse HEAD)
@@ -341,10 +340,11 @@ runs:
         INPUT_TORCH_VERSION: ${{ inputs.torch_version }}
         INPUT_CUDA_VERSION: ${{ inputs.cuda_version }}
         INPUT_WORKFLOW_NAME: ${{ inputs.workflow_name }}
+        INPUT_GCS_BUCKET_NAME: ${{ inputs.gcs_bucket_name }}
       with:
         process_gcloudignore: false
         path: $GITHUB_WORKSPACE/application.log
-        destination: ${{ INPUT_GCS_BUCKET_NAME }}/logs/$GITHUB_JOB-${INPUT_OS}-${INPUT_PYTHON_VERSION}-${CUDA_VERSION}-${TORCH_VERSION}-${WORKFLOW_NAME}-run$GITHUB_RUN_ID
+        destination: ${INPUT_GCS_BUCKET_NAME}/logs/$GITHUB_JOB-${INPUT_OS}-${INPUT_PYTHON_VERSION}-${CUDA_VERSION}-${TORCH_VERSION}-${WORKFLOW_NAME}-run$GITHUB_RUN_ID
 
     - name: '[Unix] Upload log file'
       if: ${{ inputs.os != 'windows' && ( success() || failure() ) }}
