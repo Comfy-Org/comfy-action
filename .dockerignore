@@ -1,0 +1,11 @@
+# Directories to exclude
+models/
+input/
+output/
+user/
+temp/
+.git/
+.github/
+.venv/
+__pycache__/
+*.pyc
