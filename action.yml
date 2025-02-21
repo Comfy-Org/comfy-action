@@ -132,13 +132,16 @@ runs:
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
-        CACHE_DIR="$GITHUB_WORKSPACE/models"
-        if [ -z "$ACT" ]; then
-          CACHE_DIR="~/.cache/comfy-actions-runner/modelcache"
+        CACHE_DIR="~/.cache/comfy-actions-runner/modelcache"
+        COPY_FLAG="--copy-models"
+        if [ -n "$ACT" ]; then
+          CACHE_DIR="$GITHUB_WORKSPACE/models"
+          COPY_FLAG=""
         fi
         uv run python default-models-prep.py \
           --cache-directory "$CACHE_DIR" \
-          --live-directory "$GITHUB_WORKSPACE/models"
+          --live-directory "$GITHUB_WORKSPACE/models" \
+          $COPY_FLAG
         echo "default-models-prep done, will copy workflow images"
         cp -r ${{ github.action_path }}/workflow-images/* "$GITHUB_WORKSPACE/input"
         echo "workflow images copied"

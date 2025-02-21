@@ -86,6 +86,8 @@ def main(args):
         os.makedirs(os.path.dirname(live_target), exist_ok=True)
         if not os.path.exists(live_target):
             try:
+                if args.copy_models:
+                    raise OSError("Copying requested")  # Skip symlink attempt
                 os.symlink(cache_target, live_target)
                 print(f"Linked {model_name} to {live_target}.")
             except:
@@ -102,6 +104,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--live-directory", help="Directory where models will be placed for live usage."
+    )
+    parser.add_argument(
+        "--copy-models", help="Copy models to the live directory instead of symlinking them."
     )
 
     args = parser.parse_args()
