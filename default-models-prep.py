@@ -106,7 +106,7 @@ if __name__ == "__main__":
         "--live-directory", help="Directory where models will be placed for live usage."
     )
     parser.add_argument(
-        "--copy-models", help="Copy models to the live directory instead of symlinking them."
+        "--copy-models", action="store_true", help="Copy models to the live directory instead of symlinking them."
     )
 
     args = parser.parse_args()
