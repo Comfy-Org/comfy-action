@@ -184,10 +184,11 @@ runs:
       run: |
         # We'll run detached (-d), mapping port 8188 -> 8188,
         # mounting local models, input, output, etc.
+        MODELS_CACHE_DIR="$HOME/.cache/comfy-actions-runner/modelcache"
         docker run -d --name comfyui-server --rm \
           --gpus all \
           -p 8188:8188 \
-          -v "${GITHUB_WORKSPACE}/models:/app/models" \
+          -v "${MODELS_CACHE_DIR}:/app/models" \
           -v "${GITHUB_WORKSPACE}/input:/app/input" \
           -v "${GITHUB_WORKSPACE}/output:/app/output" \
           comfy-action \
