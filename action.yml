@@ -243,6 +243,8 @@ runs:
           ${ACT:+"--skip-gcs-upload"}
 
     - name: '[Unix] Dump container logs to a local file'
+      if: ${{ inputs.os != 'windows' }}
+      shell: bash -el {0}
       run: |
         docker logs comfyui-server > "${GITHUB_WORKSPACE}/application.log"
 
