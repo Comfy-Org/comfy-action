@@ -125,6 +125,11 @@ runs:
         echo "$GITHUB_WORKSPACE"
         echo "#### Action Path ####"
         echo "${{ github.action_path }}"
+        echo "#### Debug HOME ####"
+        echo "Current user: $(whoami)"
+        echo "HOME is: $HOME"
+        echo "What does ~ expand to in this shell?"
+        cd ~ && pwd
 
     # uv run python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
     - name: '[Unix] Download models'
