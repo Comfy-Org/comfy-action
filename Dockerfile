@@ -5,6 +5,14 @@ FROM debian:bookworm-slim
 # Copy the UV package manager binary from its official image
 COPY --from=ghcr.io/astral-sh/uv:0.6.1 /uv /usr/local/bin/uv
 
+RUN mkdir -p /home/containeruser && chmod 777 /home/containeruser
+
+# Tell any process in the container to treat /home/containeruser as HOME.
+ENV HOME=/home/containeruser
+
+# Similarly, if you want to direct UV to a specific cache dir:
+ENV UV_CACHE_DIR=$HOME/.cache
+
 # Set UV environment variables:
 # - UV_LINK_MODE=copy: Copy dependencies instead of symlinking
 # - UV_COMPILE_BYTECODE=1: Compile Python bytecode during installation
