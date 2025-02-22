@@ -188,6 +188,7 @@ runs:
         docker run -d --name comfyui-server --rm \
           --gpus all \
           -p 8188:8188 \
+          --user "$(id -u runner):$(id -g runner)" \
           -v "${MODELS_CACHE_DIR}:/app/models" \
           -v "${GITHUB_WORKSPACE}/input:/app/input" \
           -v "${GITHUB_WORKSPACE}/output:/app/output" \

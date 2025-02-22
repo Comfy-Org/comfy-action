@@ -14,7 +14,7 @@ ENV UV_LINK_MODE=copy \
     UV_PROJECT_ENVIRONMENT=/app/.venv
 
 # Create a non-root user 'comfy' for security
-RUN groupadd -g 1000 comfy && useradd -u 1000 -g 1000 -d /home/comfy -m comfy
+# RUN groupadd -g 1000 comfy && useradd -u 1000 -g 1000 -d /home/comfy -m comfy
 
 # Create and set ownership of the application directory
 RUN mkdir -p /app && chown -R comfy:comfy /app
@@ -57,7 +57,7 @@ RUN --mount=type=cache,target=/root/.cache \
     uv pip install -r requirements.txt
 
 # Switch to non-root user for security
-USER comfy
+# USER comfy
 
 # Expose the port that the application will run on
 EXPOSE 8188
