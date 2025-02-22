@@ -17,7 +17,7 @@ ENV UV_LINK_MODE=copy \
 # RUN groupadd -g 1000 comfy && useradd -u 1000 -g 1000 -d /home/comfy -m comfy
 
 # Create and set ownership of the application directory
-RUN mkdir -p /app && chown -R comfy:comfy /app
+RUN mkdir -p /app
 
 # Define build arguments for Python and PyTorch versions
 ARG TORCH_VERSION=stable
@@ -42,7 +42,7 @@ RUN --mount=type=cache,target=/root/.cache \
     fi
 
 # Copy the application code and set correct ownership
-COPY --chown=comfy:comfy . /app
+COPY . /app
 
 # Set the working directory
 WORKDIR /app
