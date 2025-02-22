@@ -76,13 +76,17 @@ def download_model(url, path, model_name, expected_hash):
 
 def main(args):
     cache_dir = args.cache_directory
-    live_dir = args.live_directory
     for model_name, model_info in MODELS.items():
         cache_target = os.path.join(cache_dir, model_name)
         os.makedirs(os.path.dirname(cache_target), exist_ok=True)
         if not os.path.exists(cache_target):
             download_model(model_info['url'], cache_dir, model_name, model_info['hash'])
-        live_target = os.path.join(live_dir, model_name)
+        
+        # Skip linking/copying if no live directory specified
+        if not args.live_directory:
+            continue
+            
+        live_target = os.path.join(args.live_directory, model_name)
         os.makedirs(os.path.dirname(live_target), exist_ok=True)
         if not os.path.exists(live_target):
             try:
@@ -100,10 +104,12 @@ if __name__ == "__main__":
         description="Download and prepare the standard models the Comfy Action Runner tests against."
     )
     parser.add_argument(
-        "--cache-directory", help="Cache directory where models will be downloaded."
+        "--cache-directory", help="Cache directory where models will be downloaded.",
+        required=True
     )
     parser.add_argument(
-        "--live-directory", help="Directory where models will be placed for live usage."
+        "--live-directory", help="Directory where models will be placed for live usage.",
+        required=False, default=None
     )
     parser.add_argument(
         "--copy-models", action="store_true", help="Copy models to the live directory instead of symlinking them."
