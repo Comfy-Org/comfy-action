@@ -5,14 +5,6 @@ FROM debian:bookworm-slim
 # Copy the UV package manager binary from its official image
 COPY --from=ghcr.io/astral-sh/uv:0.6.1 /uv /usr/local/bin/uv
 
-RUN mkdir -p /home/containeruser && chmod 777 /home/containeruser
-
-# Tell any process in the container to treat /home/containeruser as HOME.
-ENV HOME=/home/containeruser
-
-# Similarly, if you want to direct UV to a specific cache dir:
-ENV UV_CACHE_DIR=$HOME/.cache
-
 # Set UV environment variables:
 # - UV_LINK_MODE=copy: Copy dependencies instead of symlinking
 # - UV_COMPILE_BYTECODE=1: Compile Python bytecode during installation
@@ -20,12 +12,6 @@ ENV UV_CACHE_DIR=$HOME/.cache
 ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/app/.venv
-
-# Create a non-root user 'comfy' for security
-# RUN groupadd -g 1000 comfy && useradd -u 1000 -g 1000 -d /home/comfy -m comfy
-
-# Create and set ownership of the application directory
-RUN mkdir -p /app && chmod 777 /app
 
 # Define build arguments for Python and PyTorch versions
 ARG TORCH_VERSION=stable
@@ -55,17 +41,11 @@ COPY . /app
 # Set the working directory
 WORKDIR /app
 
-# Create directories for models, input, and output with correct permissions
-RUN mkdir -p /app/models /app/input /app/output && chmod -R 755 /app/models /app/input /app/output
-
 # Install remaining Python dependencies from requirements.txt
 # Again uses cache mount for faster builds
 RUN --mount=type=cache,target=/root/.cache \
     . /app/.venv/bin/activate && \
     uv pip install -r requirements.txt
-
-# Switch to non-root user for security
-# USER comfy
 
 # Expose the port that the application will run on
 EXPOSE 8188
