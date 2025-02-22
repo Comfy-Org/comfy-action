@@ -137,12 +137,14 @@ runs:
       shell: bash -el {0}
       run: |
         cd ${{ github.action_path }}
-        CACHE_DIR="~/.cache/comfy-actions-runner/modelcache"
+        CACHE_DIR="$HOME/.cache/comfy-actions-runner/modelcache"
         COPY_FLAG="--copy-models"
         if [ -n "$ACT" ]; then
           CACHE_DIR="$GITHUB_WORKSPACE/models"
           COPY_FLAG=""
         fi
+        echo "CACHE_DIR: $CACHE_DIR"
+        echo "COPY_FLAG: $COPY_FLAG"
         uv run python default-models-prep.py \
           --cache-directory "$CACHE_DIR" \
           --live-directory "$GITHUB_WORKSPACE/models" \
