@@ -134,6 +134,8 @@ runs:
         echo "HOME is: $HOME"
         echo "What does ~ expand to in this shell?"
         cd ~ && pwd
+        echo "#### GCS_BUCKET_NAME ####"
+        echo "GCS_BUCKET_NAME: ${{ inputs.gcs_bucket_name }}"
 
     # uv run python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
     - name: '[Unix] Download models'
