@@ -134,6 +134,8 @@ runs:
         echo "HOME is: $HOME"
         echo "#### GCS_BUCKET_NAME ####"
         echo "GCS_BUCKET_NAME: ${{ inputs.gcs_bucket_name }}"
+        echo "#### CACHE DIRECTORY ####"
+        echo "CACHE DIRECTORY: ${{ inputs.models_cache_directory }}"
 
 
     # uv run python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
