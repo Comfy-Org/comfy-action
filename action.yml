@@ -134,9 +134,6 @@ runs:
         echo "HOME is: $HOME"
         echo "#### GCS_BUCKET_NAME ####"
         echo "GCS_BUCKET_NAME: ${{ inputs.gcs_bucket_name }}"
-        echo "What does ~ expand to in this shell?"
-        cd ~ && pwd
-       
 
 
     # uv run python default-models-prep.py --cache-directory ~/.cache/comfy-actions-runner/modelcache --live-directory "$GITHUB_WORKSPACE/models"
@@ -281,7 +278,7 @@ runs:
       shell: bash -el {0}
       run: echo "Cleaning up output files..." && rm -rf ${{ github.workspace }}/*
 
-    - name: '[Unix] Cleanup Docker container if ACT is true'
+    - name: '[Unix] Cleanup Docker container'
       if: always() && inputs.os != 'windows'
       shell: bash -el {0}
       run: echo "Cleaning up Docker container..." && docker rm -f comfyui-server
