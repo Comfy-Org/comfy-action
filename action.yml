@@ -182,7 +182,7 @@ runs:
       run: |
         # We'll run detached (-d), mapping port 8188 -> 8188,
         # mounting local models, input, output, etc.
-        docker run -d --name comfyui-server --rm \
+        docker run -d --name comfyui-server \
           --gpus all \
           -p 8188:8188 \
           -v "${{ inputs.models_cache_directory }}:/app/models" \
@@ -250,6 +250,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
+        docker stop comfyui-server
         docker logs comfyui-server > "${GITHUB_WORKSPACE}/application.log" 2>&1
 
     - name: '[Unix] Upload Output Files'
