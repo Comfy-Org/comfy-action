@@ -250,7 +250,7 @@ runs:
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
-        docker logs comfyui-server > "${GITHUB_WORKSPACE}/application.log"
+        docker logs comfyui-server > "${GITHUB_WORKSPACE}/application.log" 2>&1
 
     - name: '[Unix] Upload Output Files'
       if: env.ACT != 'true' && inputs.os != 'windows' && ( success() || failure() )
