@@ -247,7 +247,7 @@ runs:
           ${ACT:+"--skip-gcs-upload"}
 
     - name: '[Unix] Dump container logs to a local file'
-      if: ${{ inputs.os != 'windows' }}
+      if: ${{ inputs.os != 'windows' }} && ( success() || failure() )
       shell: bash -el {0}
       run: |
         docker stop comfyui-server
@@ -282,7 +282,7 @@ runs:
       run: echo "Cleaning up output files..." && rm -rf ${{ github.workspace }}/*
 
     - name: '[Unix] Cleanup Docker container if ACT is true'
-      if: always() && inputs.os != 'windows' && ( success() || failure() )
+      if: always() && inputs.os != 'windows'
       shell: bash -el {0}
       run: echo "Cleaning up Docker container..." && docker rm -f comfyui-server
 
