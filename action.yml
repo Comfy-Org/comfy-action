@@ -68,6 +68,18 @@ inputs:
     description: "Models cache directory."
     required: false
     default: "$HOME/.cache/comfy-actions-runner/modelcache"
+  skip_gcs_upload:
+    description: "Skip GCS upload."
+    required: false
+    default: "false"
+  skip_log_upload:
+    description: "Skip log upload."
+    required: false
+    default: "false"
+  skip_cleanup_output:
+    description: "Skip removing workspace files after the workflow is done."
+    required: false
+    default: "false"
 runs:
   using: "composite"
   steps:
@@ -99,7 +111,7 @@ runs:
     ############################################################
         
     - name: '[Unix] Auth to GCS'
-      if: env.ACT != 'true' && inputs.os != 'windows'
+      if: inputs.skip_gcs_upload != 'true' && inputs.os != 'windows'
       uses: "google-github-actions/auth@v2"
       with:
         credentials_json: "${{ inputs.google_credentials }}"
@@ -243,7 +255,7 @@ runs:
           --commit-message "$MESSAGE" \
           --branch-name "$BRANCH_NAME" \
           --api-endpoint "${{ inputs.api_endpoint }}" \
-          ${ACT:+"--skip-gcs-upload"}
+          ${{ inputs.skip_gcs_upload == 'true' && '--skip-gcs-upload' || '' }}
 
     - name: '[Unix] Dump container logs to a local file'
       if: ${{ inputs.os != 'windows' }} && ( success() || failure() )
@@ -253,14 +265,14 @@ runs:
         docker logs comfyui-server > "${GITHUB_WORKSPACE}/application.log" 2>&1
 
     - name: '[Unix] Upload Output Files'
-      if: env.ACT != 'true' && inputs.os != 'windows' && ( success() || failure() )
+      if: inputs.skip_log_upload != 'true' && inputs.os != 'windows' && ( success() || failure() )
       uses: actions/upload-artifact@v4
       with:
         name: output-files-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
         path: ${{ github.workspace }}/output/**
 
     - name: '[Unix] Upload log file to GCS'
-      if: env.ACT != 'true' && inputs.os != 'windows' && ( success() || failure() )
+      if: inputs.skip_gcs_upload != 'true' && inputs.os != 'windows' && ( success() || failure() )
       id: unix_upload-log-files
       uses: google-github-actions/upload-cloud-storage@v2
       with:
@@ -269,14 +281,14 @@ runs:
         destination: ${{ inputs.gcs_bucket_name }}/logs/${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
 
     - name: '[Unix] Upload log file'
-      if: env.ACT != 'true' && inputs.os != 'windows' && ( success() || failure() )
+      if: inputs.skip_log_upload != 'true' && inputs.os != 'windows' && ( success() || failure() )
       uses: actions/upload-artifact@v4
       with:
         name: app-logs-${{ github.job }}-${{ inputs.os }}-${{ inputs.python_version }}-${{ inputs.cuda_version }}-${{ inputs.torch_version }}-${{ inputs.workflow_name }}-run${{ github.run_id }}
         path: ${{ github.workspace }}/application.log
 
     - name: '[Unix] Cleanup output files only'
-      if: env.ACT != 'true' && inputs.os != 'windows' && ( success() || failure() )
+      if: inputs.skip_cleanup_output != 'true' && inputs.os != 'windows' && ( success() || failure() )
       shell: bash -el {0}
       run: echo "Cleaning up output files..." && rm -rf ${{ github.workspace }}/*
 
@@ -499,3 +511,4 @@ runs:
       if: ${{ inputs.os == 'windows' && ( success() || failure() ) }}
       shell: powershell
       run: Remove-Item -Path "${{ github.workspace }}/output/*" -Recurse -Force
+

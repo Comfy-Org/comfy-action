@@ -35,7 +35,7 @@ RUN --mount=type=cache,target=/root/.cache \
             --index-url "https://download.pytorch.org/whl/${CUDA_VERSION}"; \
     fi
 
-# Copy the application code and set correct ownership
+# Copy the application code
 COPY . /app
 
 # Set the working directory
