@@ -333,8 +333,9 @@ def main(args):
         print(f"Workflow {file_path} completed")
         end_time = int(datetime.datetime.now().timestamp())
 
-        for filename in output_filenames:
-            upload_to_gcs(args.gsc_bucket_name, gs_path, f"{args.workspace_path}/output/{filename}")
+        if not args.skip_gcs_upload:
+            for filename in output_filenames:
+                upload_to_gcs(args.gsc_bucket_name, gs_path, f"{args.workspace_path}/output/{filename}")
 
         send_payload_to_api(args, gs_path, logs_gs_path, workflow_file_name, start_time, end_time, vram_time_series, WfRunStatus.Completed)
         counter += 1
@@ -362,6 +363,7 @@ if __name__ == "__main__":
     parser.add_argument("--workspace-path", type=str, help="Workspace (ComfyUI repo) path, likely ${HOME}/action_runners/_work/ComfyUI/ComfyUI/.")
     parser.add_argument("--action-path", type=str, help="Action path., likely ${HOME}/action_runners/_work/comfy-action/.")
     parser.add_argument("--output-file-prefix", type=str, help="Output file prefix.")
-
+    parser.add_argument("--skip-gcs-upload", action="store_true", help="Skip upload to GCS.")
+    
     args = parser.parse_args()
     main(args)
