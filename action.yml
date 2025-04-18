@@ -190,21 +190,21 @@ runs:
       shell: bash -el {0}
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        python3 main.py --quick-test-for-ci
+        python main.py --quick-test-for-ci
 
     - name: '[Unix] Run ComfyUI'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
-        python3 main.py ${{inputs.comfyui_flags}} > application.log 2>&1 &
+        python main.py ${{inputs.comfyui_flags}} > application.log 2>&1 &
 
     - name: '[Unix] Check if the server is running'
       if: ${{ inputs.os != 'windows' }}
       run: |
         conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
         cd ${{ github.action_path }}
-        python3 poll_server_start.py > application.log 2>&1
+        python poll_server_start.py > application.log 2>&1
       shell: bash -el {0}
 
     - name: '[Unix] Get Details and Run Python Action'
@@ -234,7 +234,7 @@ runs:
 
         cd ${{ github.action_path }}
         echo "Running workflows: ${{ inputs.workflow_filenames }}"
-        python3 action.py \
+        python action.py \
           --comfy-workflow-names ${{ inputs.workflow_filenames }} \
           --github-action-workflow-name "${{ github.workflow }}" \
           --os "${{ inputs.os }}" \
