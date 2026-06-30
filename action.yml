@@ -148,6 +148,14 @@ runs:
         echo "Run specific torch install command"
         ${{ inputs.specific_torch_install }}
 
+    - name: '[Unix-Linux-Only] Install Pytorch specific version'
+      if: ${{ inputs.os == 'linux' && inputs.torch_version == 'specific' }}
+      shell: bash -el {0}
+      run: |
+        conda activate gha-comfyui-${{ inputs.python_version }}-${{ inputs.torch_version }}
+        echo "Run specific torch install command"
+        ${{ inputs.specific_torch_install }}
+
     - name: '[Unix] Install dependencies'
       if: ${{ inputs.os != 'windows' }}
       shell: bash -el {0}
