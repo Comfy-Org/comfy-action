@@ -235,6 +235,49 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
     return response.status_code
 
 
+def extract_filenames_from_urls(urls):
+    filenames = []
+    for url in urls:
+        fnind = url.find('filename=')
+        if fnind == -1:
+            continue
+        fnstart = fnind + len('filename=')
+        fnend = url.find('&', fnstart)
+        if fnend == -1:
+            fnend = len(url)
+        filenames.append(url[fnstart:fnend])
+    return filenames
+
+
+def parse_envelope_output(full_output):
+    """
+        Comfy-CLI >= 1.13.0 emits a JSON envelope on stdout when it is not attached
+        to a TTY: {"schema": "envelope/1", "ok": ..., "data": {"outputs": [...]}}.
+        The outputs are /view?filename=... URLs, same as the legacy text dump.
+        Returns a filename list, or None if no envelope was found.
+    """
+    for line in full_output.splitlines():
+        line = line.strip()
+        if not line.startswith('{'):
+            continue
+        try:
+            envelope = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if envelope.get("type") != "envelope":
+            continue
+        if not envelope.get("ok"):
+            raise RuntimeError(f"Comfy-CLI reported failure: {envelope.get('error')}")
+        data = envelope.get("data") or {}
+        if data.get("status") == "queued":
+            raise RuntimeError(
+                "Comfy-CLI queued the workflow instead of running it to completion; "
+                "is the --wait flag missing or unsupported by this comfy-cli version?"
+            )
+        return extract_filenames_from_urls(data.get("outputs") or [])
+    return None
+
+
 def parse_raw_output(full_output):
     """
         This is a hack, because we're not calling the Comfy JSON API directly, we need to reparse the output list from the Comfy-CLI text dump.
@@ -299,6 +342,7 @@ def main(args):
                     "comfy", "--skip-prompt", "--no-enable-telemetry",
                     "run",
                     "--workflow", file_path,
+                    "--wait", # comfy-cli >= 1.13.0 submits async by default; block until completion
                     "--timeout", "600" # 10min timeout for workflow
                 ],
                 check=True,
@@ -314,7 +358,10 @@ def main(args):
             full_output = f"{result.stdout}"
             print(f"stdout: {full_output}")
             print(f"stderr: {result.stderr}")
-            output_filenames = parse_raw_output(full_output)
+            output_filenames = parse_envelope_output(full_output)
+            if output_filenames is None:
+                # Legacy text dump from comfy-cli < 1.13.0 (or a TTY-attached run)
+                output_filenames = parse_raw_output(full_output)
             if output_filenames is None:
                 if not os.path.exists(f"{args.workspace_path}/output/{args.output_file_prefix}_{counter:05}_.png"):
                     raise RuntimeError("Invalid output from Comfy-CLI, no outputs found")
