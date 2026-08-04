@@ -1,5 +1,6 @@
 import argparse, datetime, json, os, sys, pprint, re, subprocess, requests, platform, psutil, traceback, threading, time
 from enum import Enum
+from urllib.parse import urlsplit, parse_qs
 from google.cloud import storage
 
 REQUEST_TIMEOUT = 60 * 5
@@ -236,16 +237,19 @@ def send_payload_to_api(args, output_files_gcs_paths, logs_gcs_path, workflow_na
 
 
 def extract_filenames_from_urls(urls):
+    """
+        Extract workspace-relative output paths (subfolder/filename) from the
+        /view?filename=...&subfolder=...&type=... URLs Comfy-CLI reports.
+        parse_qs percent-decodes the values for us.
+    """
     filenames = []
     for url in urls:
-        fnind = url.find('filename=')
-        if fnind == -1:
+        params = parse_qs(urlsplit(url).query)
+        filename = params.get('filename', [''])[0]
+        if not filename:
             continue
-        fnstart = fnind + len('filename=')
-        fnend = url.find('&', fnstart)
-        if fnend == -1:
-            fnend = len(url)
-        filenames.append(url[fnstart:fnend])
+        subfolder = params.get('subfolder', [''])[0]
+        filenames.append(os.path.join(subfolder, filename) if subfolder else filename)
     return filenames
 
 
@@ -359,10 +363,10 @@ def main(args):
             print(f"stdout: {full_output}")
             print(f"stderr: {result.stderr}")
             output_filenames = parse_envelope_output(full_output)
-            if output_filenames is None:
+            if not output_filenames:
                 # Legacy text dump from comfy-cli < 1.13.0 (or a TTY-attached run)
                 output_filenames = parse_raw_output(full_output)
-            if output_filenames is None:
+            if not output_filenames:
                 if not os.path.exists(f"{args.workspace_path}/output/{args.output_file_prefix}_{counter:05}_.png"):
                     raise RuntimeError("Invalid output from Comfy-CLI, no outputs found")
                 output_filenames = [f"{args.output_file_prefix}_{counter:05}_.png"]
